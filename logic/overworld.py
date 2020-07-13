@@ -16,6 +16,7 @@ class World:
         Location().add(Seashell(0x0A3)).connect(start, bush)  # bushes below the shop
         Location().add(Seashell(0x2B2)).connect(start, SHOVEL)  # in the kennel
         Location().add(Seashell(0x0D2)).connect(start, PEGASUS_BOOTS)  # smash into tree next to lv1
+        Location().add(Song(0x092)).connect(start, OCARINA)  # Marins song
 
         sword_beach = Location().add(BeachSword()).connect(start, OR(bush, SHIELD, attack_hookshot))
         if options.boomerang != 'default':
@@ -38,12 +39,14 @@ class World:
         hookshot_cave = Location().add(Chest(0x2B3)).connect(forest, AND(POWER_BRACELET, HOOKSHOT))
 
         writes_hut = Location().connect(swamp, FEATHER)  # includes the cave behind the hut
-        writes_hut.add(OwlStatue(0x11))
+        if options.owlstatues == "both" or options.owlstatues == "overworld":
+            writes_hut.add(OwlStatue(0x11))
         writes_cave_left_chest = Location().add(Chest(0x2AE)).connect(writes_hut, OR(FEATHER, HOOKSHOT)) # 1st chest in the cave behind the hut
         Location().add(Chest(0x2AF)).connect(writes_hut, POWER_BRACELET)  # 2nd chest in the cave behind the hut.
 
         graveyard = Location().connect(forest, OR(FEATHER, POWER_BRACELET))  # whole area from the graveyard up to the moblin cave
-        graveyard.add(OwlStatue(0x035))
+        if options.owlstatues == "both" or options.owlstatues == "overworld":
+            graveyard.add(OwlStatue(0x035))
         graveyard_heartpiece = Location().add(HeartPiece(0x2DF)).connect(graveyard, AND(BOMB, OR(HOOKSHOT, PEGASUS_BOOTS), FEATHER))  # grave cave
         Location().add(Seashell(0x074)).connect(graveyard, AND(POWER_BRACELET, SHOVEL))  # next to grave cave, digging spot
         Location().add(Chest(0x2E2)).connect(graveyard, SWORD)  # moblin cave, boss requires sword, contains Bowwow
@@ -54,6 +57,7 @@ class World:
         center_area = Location().connect(start, POWER_BRACELET)
         center_area.connect(graveyard, POWER_BRACELET)
         center_area.add(Chest(0x2CD))  # cave next to town
+        mamu = Location().add(Song(0x2FB)).connect(center_area, AND(FEATHER, PEGASUS_BOOTS, HOOKSHOT, POWER_BRACELET, OCARINA))
         Location().add(Chest(0x2F4), HeartPiece(0x2E5)).connect(center_area, AND(BOMB, PEGASUS_BOOTS))  # cave near honeycomb
         dungeon3_entrance = Location().connect(center_area, OR(FEATHER, FLIPPERS)) 
         Location().add(Seashell(0x0A5)).connect(dungeon3_entrance, SHOVEL)  # above lv3
@@ -64,15 +68,20 @@ class World:
         Location().add(Seashell(0x0B9)).connect(center_area, POWER_BRACELET)  # under the rock
         Location().add(Seashell(0x0E9)).connect(center_area, bush)  # same screen as mermaid statue
         tiny_island = Location().add(Seashell(0x0F8)).connect(center_area, AND(FLIPPERS, bush))  # tiny island
-        prairie_plateau = Location().add(OwlStatue(0x0A8)).connect(center_area, AND(BOMB, FEATHER))  # prairie plateau at the owl statue
+        prairie_plateau = Location().connect(center_area, AND(BOMB, FEATHER))  # prairie plateau at the owl statue
+        if options.owlstatues == "both" or options.owlstatues == "overworld":
+            prairie_plateau.add(OwlStatue(0x0A8))
         Location().add(Seashell(0x0A8)).connect(prairie_plateau, SHOVEL)  # at the owl statue
         Location().add(MadBatter(0x1E0)).connect(center_area, AND(FEATHER, OR(SWORD, MAGIC_ROD, BOOMERANG), FLIPPERS, MAGIC_POWDER))  # you can use powder instead of sword/magic-rod to clear the bushes, but it is a bit of an advanced action
+
+        Location().add(SeashellMansion(0x2E9)).connect(center_area, COUNT(SEASHELL, 20))
         
         dungeon5_entrance = Location().connect(center_area, FLIPPERS)
         
         # Richard
         richard_cave = Location().connect(center_area, COUNT(GOLD_LEAF, 5))
-        Location().add(OwlStatue(0x0C6)).connect(richard_cave, bush)
+        if options.owlstatues == "both" or options.owlstatues == "overworld":
+            Location().add(OwlStatue(0x0C6)).connect(richard_cave, bush)
         Location().add(SlimeKey()).connect(richard_cave, AND(bush, SHOVEL))
         richard_cave_chest = Location().add(Chest(0x2C8)).connect(richard_cave, OR(FEATHER, HOOKSHOT))
 
@@ -86,10 +95,12 @@ class World:
         Location().add(GoldLeaf(0x2C6)).connect(castle_inside, OR(BOOMERANG, AND(POWER_BRACELET, attack_hookshot)))  # in the castle, spinning spikeball enemy
 
         animal_town = Location().connect(center_area, OR(FLIPPERS, HOOKSHOT, AND(PEGASUS_BOOTS, OR(BOMB, BOOMERANG, MAGIC_POWDER, MAGIC_ROD, SWORD)))) # passage under river blocked by bush
-        animal_town.add(OwlStatue(0x0DA))
+        if options.owlstatues == "both" or options.owlstatues == "overworld":
+            animal_town.add(OwlStatue(0x0DA))
         Location().add(Seashell(0x0DA)).connect(animal_town, SHOVEL)  # owl statue at the water
         desert = Location().connect(animal_town, bush)  # Note: We removed the walrus blocking the desert.
-        desert.add(OwlStatue(0x0CF))
+        if options.owlstatues == "both" or options.owlstatues == "overworld":
+            desert.add(OwlStatue(0x0CF))
         Location().add(AnglerKey()).connect(desert, OR(BOW, SWORD, HOOKSHOT, MAGIC_ROD, BOOMERANG))
         animal_town_bombcave = Location().add(HeartPiece(0x2E6)).connect(desert, AND(BOMB, FEATHER, HOOKSHOT))  # cave in the upper right of animal town
         Location().add(HeartPiece(0x1E8)).connect(desert, BOMB)  # above the quicksand cave
@@ -104,21 +115,27 @@ class World:
         dungeon4_entrance = Location().connect(below_mountains, FLIPPERS) # swim
         dungeon4_entrance.connect(right_mountains_1, ANGLER_KEY) # go around right_mountains_1, "needs" angler key to unlock ledge
 
+        Location().add(Song(0x2FD)).connect(below_mountains, AND(OCARINA, FLIPPERS))  # Manbo's Mambo
+
         face_shrine = Location().add(Chest(0x2FC)).connect(animal_town, AND(bush, POWER_BRACELET))
-        face_shrine.add(OwlStatue(0x08F))
+        if options.owlstatues == "both" or options.owlstatues == "overworld":
+            face_shrine.add(OwlStatue(0x08F))
         Location().add(FaceKey()).connect(face_shrine, OR(BOW, MAGIC_ROD, SWORD))
 
         dungeon6_entrance = Location().connect(animal_town, AND(FLIPPERS, HOOKSHOT))
 
         # Raft game.
         raft_game = Location().add(Chest(0x05C), Chest(0x05D))
-        raft_game.add(OwlStatue(0x5D))
+        if options.owlstatues == "both" or options.owlstatues == "overworld":
+            raft_game.add(OwlStatue(0x5D))
         raft_game.connect(below_mountains, OR(FLIPPERS, HOOKSHOT)) # flippers from d6 water area to one way cave. Flippers guarantee way back
         raft_game.connect(center_area, FLIPPERS)
 
         right_mountains_2 = Location().connect(right_mountains_1, FLIPPERS) # towards d7
         luigi_rooster_house = Location().connect(right_mountains_1, FLIPPERS) # up the ladder
-        right_mountains_2.add(OwlStatue(0x1E)) # owl statue below d7
+
+        if options.owlstatues == "both" or options.owlstatues == "overworld":
+            right_mountains_2.add(OwlStatue(0x1E)) # owl statue below d7
         bridge_seashell = Location().add(Seashell(0x00C)).connect(luigi_rooster_house, AND(FEATHER, POWER_BRACELET)) # seashell right of rooster house, there is a hole in the bridge
         bird_key = Location().add(BirdKey()).connect(luigi_rooster_house, COUNT(POWER_BRACELET, 2)) # assumes rooster to cross the pits before the statue?
         # MultiChest is causing issues with the sanity checker when keysanity is disabled, so disabled it for now.
@@ -133,7 +150,8 @@ class World:
         left_side_mountain.add(Chest(0x004)) # top of falling rocks hill
         Location().add(MadBatter(0x1E2)).connect(left_side_mountain, AND(POWER_BRACELET, MAGIC_POWDER))
         dungeon8_phone = Location().connect(left_side_mountain, AND(BOMB, COUNT(SHIELD, 2)))
-        dungeon8_entrance = Location().connect(dungeon8_phone, AND(OCARINA, SWORD)) # TODO: Song 3
+
+        dungeon8_entrance = Location().connect(dungeon8_phone, AND(OCARINA, SONG3, SWORD))
 
         if options.logic == 'hard' or options.logic == 'glitched' or options.logic == 'hell':
             dream_hut.connect(start, HOOKSHOT) # clip past the rocks in front of dream hut

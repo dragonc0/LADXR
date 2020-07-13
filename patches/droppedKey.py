@@ -21,15 +21,15 @@ notSpecialSideView:
         call $512A ; mark room as done
         
         ; Handle item effect
-        ld   a, $02
+        ld   a, $06 ; giveItemMultiworld
         rst  8
         
-        ldh  a, [$F1] ; Load active sprite variant
+        ldh  a, [$F1] ; Load active sprite variant to see if this is just a normal small key
         cp   $1A
         jr   z, isAKey
         
         ;Show message (if not a key)
-        ld   a, $03
+        ld   a, $0A ; showMessageMultiworld
         rst  8
 isAKey:
         ret
@@ -106,3 +106,10 @@ isAKey:
     rom.banks[0x3E][0x3800 + 0x050] = 0x50
     # Sword on beach
     rom.banks[0x3E][0x3800 + 0x0F2] = 0x0B
+    # Sword upgrade
+    rom.banks[0x3E][0x3800 + 0x2E9] = 0x0B
+
+    # Songs
+    rom.banks[0x3E][0x3800 + 0x092] = 0x8B # song 1
+    rom.banks[0x3E][0x3800 + 0x2FD] = 0x8C # song 2
+    rom.banks[0x3E][0x3800 + 0x2FB] = 0x8D # song 3

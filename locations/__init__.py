@@ -2,7 +2,7 @@ from .beachSword import BeachSword
 from .chest import Chest, DungeonChest
 from .multiChest import MultiChest
 from .droppedKey import DroppedKey
-from .seashell import Seashell
+from .seashell import Seashell, SeashellMansion
 from .heartContainer import HeartContainer
 from .owlStatue import OwlStatue
 from .madBatter import MadBatter
@@ -18,5 +18,6 @@ from .faceKey import FaceKey
 from .birdKey import BirdKey
 from .heartPiece import HeartPiece
 from .tunicFairy import TunicFairy
+from .song import Song
 
 from .items import *

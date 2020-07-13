@@ -13,22 +13,41 @@ RenderChestItem:
     call $3BC0 ; RenderActiveEntitySpritePair
     ret
 
+SendItemFromChestToOtherGameWait:
+    call MainLoop.readLinkCable
+
 SendItemFromChestToOtherGame:
+    ld   a, [wLinkStatusBits]
+    bit  1, a
+    jp   nz, SendItemFromChestToOtherGameWait
+    set  1, a
+    ld   [wLinkStatusBits], a
+
+    ; Store send item data
+    ld   hl, $0000
+    call OffsetPointerByRoomNumber
+    ld   a, h
+    ld   [wLinkSendItemRoomHigh], a
+    ld   a, l
+    ld   [wLinkSendItemRoomLow], a
+    ld   hl, $7300
+    call OffsetPointerByRoomNumber
+    ld   a, [hl]
+    ld   [wLinkSendItemTarget], a
     ldh  a, [$F1] ; Load active sprite variant
-    call LinkSendByte
-    ld   a, $F1   ; link command, give item
-    call LinkSendByte
+    ld   [wLinkSendItemItem], a
     ret
 
-GiveItemFromChest:
+GiveItemFromChestMultiworld:
     ; Check our "item is for other player" flag
     ld   hl, $7300
     call OffsetPointerByRoomNumber
     ld   a, [hl]
-    and  a
+    ld   hl, $0055
+    cp   [hl]
     jr   nz, SendItemFromChestToOtherGame
 
-GiveItemFromChestNoLink:
+GiveItemFromChest:
     ldh  a, [$F1] ; Load active sprite variant
 
     rst  0 ; JUMP TABLE
@@ -171,6 +190,9 @@ GiveItemFromChestNoLink:
     dw GiveBlueTunic
     dw GiveExtraHeart
     dw TakeHeart
+    dw GiveSong1
+    dw GiveSong2
+    dw GiveSong3
 
 NoItem:
     ret
@@ -484,18 +506,18 @@ GiveRedTunic:
     ld  a, $01
     ld  [$DC0F], a
     ; We use DB6D to store which tunics we have available.
-    ld  a, [$DB6D]
+    ld  a, [wCollectedTunics]
     or  $01
-    ld  [$DB6D], a
+    ld  [wCollectedTunics], a
     ret
 
 GiveBlueTunic:
     ld  a, $02
     ld  [$DC0F], a
     ; We use DB6D to store which tunics we have available.
-    ld  a, [$DB6D]
+    ld  a, [wCollectedTunics]
     or  $02
-    ld  [$DB6D], a
+    ld  [wCollectedTunics], a
     ret
 
 GiveExtraHeart:
@@ -527,27 +549,51 @@ TakeHeart:
     ld   [hl], $FF
     ret
 
-ItemMessageForLink:
-    ld   a, $C9
-    jp  $2385 ; Opendialog in $000-$0FF range
+GiveSong1:
+    ld   hl, $DB49
+    set  2, [hl]
+    ld   a, $00
+    ld   [$DB4A], a
+    ret
 
-ItemMessage:
-    ; Fill the custom message slot with this item message.
-    call BuildItemMessage
+GiveSong2:
+    ld   hl, $DB49
+    set  1, [hl]
+    ld   a, $01
+    ld   [$DB4A], a
+    ret
+
+GiveSong3:
+    ld   hl, $DB49
+    set  0, [hl]
+    ld   a, $02
+    ld   [$DB4A], a
+    ret
+
+ItemMessageMultiworld:
     ; Check our "item is for other player" flag
     ld   hl, $7300
     call OffsetPointerByRoomNumber
     ld   a, [hl]
-    and  a
-    jr   nz, ItemMessageForLink
+    ld   hl, $0055
+    cp   [hl]
+    jr   nz, ItemMessageForOtherPlayer
 
-ItemMessageNoLink:
+ItemMessage:
+    ; Fill the custom message slot with this item message.
+    call BuildItemMessage
     ldh  a, [$F1]
     ld   d, $00
     ld   e, a
     ld   hl, ItemMessageTable
     add  hl, de
     ld   a, [hl]
+    jp   $2385 ; Opendialog in $000-$0FF range
+
+ItemMessageForOtherPlayer:
+    call BuildItemMessage
+    call MessageAddTargetPlayer
+    ld   a, $C9
     jp   $2385 ; Opendialog in $000-$0FF range
 
 ItemSpriteTable:
@@ -645,6 +691,9 @@ LargeItemSpriteTable:
     db $48, $0B, $48, $2B ; blue tunic
     db $2A, $0C, $2A, $2C ; heart container
     db $2A, $0F, $2A, $2F ; bad heart container
+    db $70, $09, $70, $29 ; song 1
+    db $72, $0B, $72, $2B ; song 2
+    db $74, $08, $74, $28 ; song 3
 
 ItemMessageTable:
     db $90, $3D, $89, $93, $94, $95, $96, $97, $98, $99, $9A, $9B, $9C, $9D, $D9, $A2
@@ -657,7 +706,7 @@ ItemMessageTable:
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     ; $80
-    db $4F, $C8, $CA, $CB, $E2, $E3, $E4, $CC, $CD, $2A, $2B
+    db $4F, $C8, $CA, $CB, $E2, $E3, $E4, $CC, $CD, $2A, $2B, $C9, $C9, $C9
 
 RenderDroppedKey:
     ;TODO: See EntityInitKeyDropPoint for a few special cases to unload.
@@ -718,3 +767,20 @@ OffsetPointerByRoomNumber:
 .notCavesA:
     add  hl, de
     ret
+
+GiveItemAndMessageForRoom:
+    ;Load the chest type from the chest table.
+    ld   hl, $7800
+    call OffsetPointerByRoomNumber
+    ld   a, [hl]
+    ldh  [$F1], a
+    call GiveItemFromChest
+    jp ItemMessage
+
+RenderItemForRoom:
+    ;Load the chest type from the chest table.
+    ld   hl, $7800
+    call OffsetPointerByRoomNumber
+    ld   a, [hl]
+    ldh  [$F1], a
+    jp   RenderChestItem

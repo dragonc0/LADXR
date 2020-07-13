@@ -193,6 +193,7 @@ checkMetadataTable = {
     "0x0A6": CheckMetadata("Outside D3 Island Bush", "Ukuku Prairie"), #http://artemis251.fobby.net/zelda/maps/overworld/00A6.GIF
     "0x08B": CheckMetadata("East of Seashell Mansion Bush", "Ukuku Prairie"), #http://artemis251.fobby.net/zelda/maps/overworld/008B.GIF
     "0x0A4": CheckMetadata("East of Mabe Tree Bonk", "Ukuku Prairie"), #http://artemis251.fobby.net/zelda/maps/overworld/00A4.GIF
+    "0x2E9": CheckMetadata("Seashell Mansion", "Ukuku Prairie"),
     "0x1FD": CheckMetadata("Boots Pit", "Kanalet Castle"), #http://artemis251.fobby.net/zelda/maps/underworld1/01FD.GIF
     "0x0B9": CheckMetadata("Rock Seashell", "Donut Plains"), #http://artemis251.fobby.net/zelda/maps/overworld/00B9.GIF
     "0x0E9": CheckMetadata("Lone Bush", "Martha's Bay"), #http://artemis251.fobby.net/zelda/maps/overworld/00E9.GIF
@@ -236,4 +237,7 @@ checkMetadataTable = {
     "0x0CE": CheckMetadata("Lanmola", "Yarna Desert"), #http://artemis251.fobby.net/zelda/maps/overworld/00CE.GIF
     "0x27F": CheckMetadata("Armos Knight", "Southern Face Shrine"), #http://artemis251.fobby.net/zelda/maps/underworld2/027F.GIF
     "0x27A": CheckMetadata("Bird Key Cave", "Tal Tal Mountains"), #http://artemis251.fobby.net/zelda/maps/underworld2/027A.GIF
+    "0x092": CheckMetadata("Ballad of the Wind Fish", "Mabe Village"),
+    "0x2FD": CheckMetadata("Manbo's Mambo", "Tal Tal Heights"),
+    "0x2FB": CheckMetadata("Mamu", "Ukuku Prairie"),
 }

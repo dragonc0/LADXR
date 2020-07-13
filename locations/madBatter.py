@@ -9,12 +9,15 @@ class MadBatter(ItemInfo):
         RUPEES_50, RUPEES_20, RUPEES_100, RUPEES_200, RUPEES_500,
         SEASHELL, BOOMERANG, HEART_PIECE, ARROWS_10, SINGLE_ARROW,
         MAX_POWDER_UPGRADE, MAX_BOMBS_UPGRADE, MAX_ARROWS_UPGRADE, RED_TUNIC, BLUE_TUNIC]
+    MULTIWORLD = True
 
     def configure(self, options):
         return
 
-    def patch(self, rom, option, *, cross_world=False):
+    def patch(self, rom, option, *, multiworld=None):
         rom.banks[0x18][0x0F90 + (self.room & 0x0F)] = CHEST_ITEMS[option]
+        if multiworld is not None:
+            rom.banks[0x3E][0x3300 + self.room] = multiworld
 
     def read(self, rom):
         assert self._location is not None, hex(self.room)

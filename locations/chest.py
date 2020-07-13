@@ -10,7 +10,7 @@ class Chest(ItemInfo):
         RUPEES_50, RUPEES_20, RUPEES_100, RUPEES_200, RUPEES_500,
         SEASHELL, MESSAGE, GEL, BOOMERANG, HEART_PIECE, BOWWOW, ARROWS_10, SINGLE_ARROW,
         MAX_POWDER_UPGRADE, MAX_BOMBS_UPGRADE, MAX_ARROWS_UPGRADE, RED_TUNIC, BLUE_TUNIC,
-        HEART_CONTAINER, BAD_HEART_CONTAINER, TOADSTOOL]
+        HEART_CONTAINER, BAD_HEART_CONTAINER, TOADSTOOL, SONG1, SONG2, SONG3]
         #500 rupees show 200 rupees message
         #not sure if we should se MAGIC_POWDER, as it overrules the toadstool
     MULTIWORLD = True
@@ -25,13 +25,16 @@ class Chest(ItemInfo):
             for n in range(10):
                 self.OPTIONS += ["KEY%d" % (n), "MAP%d" % (n), "COMPASS%d" % (n), "STONE_BEAK%d" % (n), "NIGHTMARE_KEY%d" % (n)]
 
-    def patch(self, rom, option, *, cross_world=False):
+    def patch(self, rom, option, *, multiworld=None):
         rom.banks[0x14][self.addr] = CHEST_ITEMS[option]
 
         if self.room == 0x1B6:
             # Patch the code that gives the nightmare key when you throw the pot at the chest in dungeon 6
             # As this is hardcoded for a specific chest type
             rom.patch(3, 0x145D, ASM("ld a, $19"), ASM("ld a, $%02x" % (CHEST_ITEMS[option])))
+
+        if multiworld is not None:
+            rom.banks[0x3E][0x3300 + self.room] = multiworld
 
     def read(self, rom):
         value = rom.banks[0x14][self.addr]
@@ -52,11 +55,11 @@ class DungeonChest(Chest):
             d = self._location.dungeon
             self.OPTIONS = Chest.OPTIONS + ["MAP%d" % (d), "COMPASS%d" % (d), "STONE_BEAK%d" % (d), "NIGHTMARE_KEY%d" % (d), "KEY%d" % (d)]
 
-    def patch(self, rom, option, *, cross_world=False):
+    def patch(self, rom, option, *, multiworld=None):
         if option.startswith(MAP) or option.startswith(COMPASS) or option.startswith(STONE_BEAK) or option.startswith(NIGHTMARE_KEY) or option.startswith(KEY):
-            if self._location.dungeon == int(option[-1]) and not cross_world:
+            if self._location.dungeon == int(option[-1]) and multiworld is None:
                 option = option[:-1]
-        super().patch(rom, option, cross_world=cross_world)
+        super().patch(rom, option, multiworld=multiworld)
 
     def read(self, rom):
         result = super().read(rom)

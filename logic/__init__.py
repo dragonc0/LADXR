@@ -42,7 +42,7 @@ class Logic:
         dungeons[entranceMapping[4]].entrance.connect(world.dungeon5_entrance, OR(POWER_BRACELET, FEATHER, PEGASUS_BOOTS)) # requirements handled in dungeon5_entrance
         dungeons[entranceMapping[5]].entrance.connect(world.dungeon6_entrance, FACE_KEY)
         dungeons[entranceMapping[6]].entrance.connect(world.right_mountains_3, BIRD_KEY)
-        dungeons[entranceMapping[7]].entrance.connect(world.dungeon8_entrance, BOMB)  # TODO: Requires song3. Requirements handled in dungeon8_entrance
+        dungeons[entranceMapping[7]].entrance.connect(world.dungeon8_entrance, SONG3) #remove song3 for bomb trigger
         dungeons[entranceMapping[8]].entrance.connect(world.graveyard, POWER_BRACELET)
             
         self.start = world.start
@@ -101,15 +101,15 @@ class MultiworldLogic:
         self.location_list = [self.start]
         self.iteminfo_list = []
 
-        for n in range(2):
-            world = Logic(configuration_options, rnd)
+        for n in range(configuration_options.multiworld):
+            world = Logic(configuration_options.multiworld_options[n], rnd)
             for ii in world.iteminfo_list:
                 ii.world = n
 
             for loc in world.location_list:
                 loc.simple_connections = [(target, addWorldIdToRequirements(n, req)) for target, req in loc.simple_connections]
                 loc.gated_connections = [(target, addWorldIdToRequirements(n, req)) for target, req in loc.gated_connections]
-                loc.items = [MultiworldItemInfoWrapper(n, ii) for ii in loc.items]
+                loc.items = [MultiworldItemInfoWrapper(n, configuration_options.multiworld, ii) for ii in loc.items]
                 self.iteminfo_list += loc.items
 
             self.worlds.append(world)
@@ -123,10 +123,23 @@ class MultiworldLogic:
 
 
 class MultiworldItemInfoWrapper:
-    def __init__(self, world, target):
+    def __init__(self, world, world_count, target):
         self.world = world
+        self.world_count = world_count
         self.target = target
         self.MULTIWORLD_OPTIONS = None
+
+    @property
+    def priority(self):
+        return self.target.priority
+
+    @property
+    def forced_item(self):
+        if self.target.forced_item is None:
+            return None
+        if "_W" in self.target.forced_item:
+            return self.target.forced_item
+        return "%s_W%d" % (self.target.forced_item, self.world)
 
     def read(self, rom):
         return "%s_W%d" % (self.target.read(rom), self.world)
@@ -136,18 +149,21 @@ class MultiworldItemInfoWrapper:
             options = self.target.getOptions()
             if self.target.MULTIWORLD and len(options) > 1:
                 self.MULTIWORLD_OPTIONS = []
-                for n in range(2):
+                for n in range(self.world_count):
                     self.MULTIWORLD_OPTIONS += ["%s_W%d" % (t, n) for t in options]
             else:
                 self.MULTIWORLD_OPTIONS = ["%s_W%d" % (t, self.world) for t in options]
         return self.MULTIWORLD_OPTIONS
 
     def patch(self, rom, option):
-        if self.world != int(option[1]):
-            rom.banks[0x3E][0x3300 + self.target.room] = 0x01
-            self.target.patch(rom, option[3:], cross_world=True)
+        idx = option.rfind("_W")
+        world = int(option[idx+2:])
+        option = option[:idx]
+        if not self.target.MULTIWORLD:
+            assert self.world == world
+            self.target.patch(rom, option)
         else:
-            self.target.patch(rom, option[3:])
+            self.target.patch(rom, option, multiworld=world)
 
     def __repr__(self):
         return "W%d:%s" % (self.world, repr(self.target))
