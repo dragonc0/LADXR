@@ -31,8 +31,8 @@ class World:
         Location().add(Chest(0x071)).connect(forest, POWER_BRACELET) #chest at start forest with 2 zols
         Location().add(MadBatter(0x1E1)).connect(forest, AND(POWER_BRACELET, MAGIC_POWDER))
         swamp = Location().connect(forest, OR(MAGIC_POWDER, FEATHER, POWER_BRACELET))
-        swamp_chest = Location().add(Chest(0x034)).connect(swamp, OR(BOWWOW, HOOKSHOT, MAGIC_ROD, BOOMERANG))
-        dungeon2_entrance = Location().connect(swamp, OR(BOWWOW, HOOKSHOT, MAGIC_ROD, BOOMERANG))
+        swamp_chest = Location().add(Chest(0x034)).connect(swamp, OR(BOWWOW, HOOKSHOT, MAGIC_ROD, BOOMERANG, COUNT(SWORD, 2)))
+        dungeon2_entrance = Location().connect(swamp, OR(BOWWOW, HOOKSHOT, MAGIC_ROD, BOOMERANG, COUNT(SWORD, 2)))
         forest_rear_chest = Location().add(Chest(0x041)).connect(swamp, bush)  # tail key
         Location().add(Chest(0x2BD)).connect(forest, SWORD)  # chest in forest cave on route to mushroom
         log_cave_heartpiece = Location().add(HeartPiece(0x2AB)).connect(forest, POWER_BRACELET)  # piece of heart in the forest cave on route to the mushroom
@@ -72,7 +72,7 @@ class World:
         if options.owlstatues == "both" or options.owlstatues == "overworld":
             prairie_plateau.add(OwlStatue(0x0A8))
         Location().add(Seashell(0x0A8)).connect(prairie_plateau, SHOVEL)  # at the owl statue
-        Location().add(MadBatter(0x1E0)).connect(center_area, AND(FEATHER, OR(SWORD, MAGIC_ROD, BOOMERANG), FLIPPERS, MAGIC_POWDER))  # you can use powder instead of sword/magic-rod to clear the bushes, but it is a bit of an advanced action
+        mad_batter_lake = Location().add(MadBatter(0x1E0)).connect(center_area, AND(FEATHER, OR(SWORD, MAGIC_ROD, BOOMERANG), FLIPPERS, MAGIC_POWDER))  # you can use powder instead of sword/magic-rod to clear the bushes, but it is a bit of an advanced action
 
         Location().add(SeashellMansion(0x2E9)).connect(center_area, COUNT(SEASHELL, 20))
         
@@ -162,6 +162,8 @@ class World:
             writes_hut.connect(swamp, HOOKSHOT) # hookshot the sign in front of writes hut
             graveyard_heartpiece.connect(graveyard, FEATHER) # jump to the bottom right tile around the blocks
             graveyard_heartpiece.connect(graveyard, OR(HOOKSHOT, BOOMERANG)) # push bottom block, wall clip and hookshot/boomerang corner to grab item
+            mamu.connect(center_area, AND(FEATHER, POWER_BRACELET, OCARINA)) # tight jump to enter sign maze, tight jump to reach bottom left sign
+            mad_batter_lake.connect(center_area, AND(FEATHER, FLIPPERS, MAGIC_POWDER)) # use powder to break the bushes
             animal_town_bombcave.connect(desert, AND(BOMB, PEGASUS_BOOTS, FEATHER)) # jump across horizontal 4 gap to heart piece
             dungeon6_entrance.connect(animal_town, AND(FLIPPERS, FEATHER)) # jump the gap in underground passage to d6
             dungeon8_phone.connect(left_side_mountain, AND(BOMB, PEGASUS_BOOTS)) # flame skip
@@ -191,7 +193,7 @@ class World:
             bird_key.connect(luigi_rooster_house, AND(FEATHER, HOOKSHOT)) # hookshot jump across the big pits room
             right_mountains_3.connect(right_mountains_2, bush) # 2 seperate pit buffers so not obnoxious to get past the two pit rooms before d7 area. 2nd pits can pit buffer on top right screen, bottom wall to scroll on top of the wall on bottom screen
             into_to_mountains.connect(mountain_heartpiece, BOMB, one_way=True) # bomb trigger from boots crystal cave
-            dungeon8_entrance.connect(dungeon8_phone, OR(BOMB, OCARINA)) # bomb trigger the head and walk trough, or play the ocarina song 3 and walk through
+            dungeon8_entrance.connect(dungeon8_phone, OR(BOMB, AND(OCARINA, SONG3))) # bomb trigger the head and walk trough, or play the ocarina song 3 and walk through
             
         if options.logic == 'hell':
             swamp.connect(forest, bush) # damage boost from toadstool area across the pit. added bush requirement since a requirement is necessary
@@ -200,9 +202,11 @@ class World:
             writes_hut.connect(swamp, PEGASUS_BOOTS) # boots bonk telephone booth
             writes_cave_left_chest.connect(writes_hut, bush) # damage boost off the zol to get across the pit. added bush since a requirement is necessary
             graveyard.connect(forest, OR(PEGASUS_BOOTS, HOOKSHOT)) # boots bonk witches hut, or hookshot spam across the pit
+            mamu.connect(center_area, AND(OR(PEGASUS_BOOTS, HOOKSHOT), POWER_BRACELET, OCARINA)) # pit buffer to cross entrance pits, boots bonk bottom wall or hookshot to reach bottom left sign
             dungeon3_entrance.connect(center_area, PEGASUS_BOOTS) # boots bonk + water buffer across bottom wall all the way to the entrance 
             prairie_3gap_stairs.connect(center_area, PEGASUS_BOOTS) # pit buffer to clip bottom wall and boots bonk across
             prairie_plateau.connect(center_area, AND(BOMB, OR(PEGASUS_BOOTS, HOOKSHOT))) # boots bonk across pits, or hookshot spam
+            mad_batter_lake.connect(center_area, AND(OR(PEGASUS_BOOTS, HOOKSHOT), FLIPPERS, MAGIC_POWDER)) # hookshot spam + pit buffer to get over the top side, boots bonk across bottom wall as alternative. Powder breaks bushes
             dungeon5_entrance.connect(center_area, FEATHER) # jesus jump into d5 entrance (wall clip or fast fall), wall clip to get out
             richard_cave_chest.connect(richard_cave, PEGASUS_BOOTS) # boots bonk
             #castle.connect(center_area, AND(PEGASUS_BOOTS, MEDICINE, OR(BOMB, BOOMERANG, MAGIC_POWDER, MAGIC_ROD, SWORD))) # medicine iframe abuse to get across spikes

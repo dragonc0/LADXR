@@ -34,7 +34,7 @@ class Dungeon7:
             first_key.items[0].forced_item = KEY7
             
         if options.logic == 'hard' or options.logic == 'glitched' or options.logic == 'hell':
-            boss.connect(pre_boss, OR(MAGIC_ROD, AND(BOMB, BOW))) # magic rod and bomb arrows allow a 3 cycle which avoids the feather wind attack
+            boss.connect(pre_boss, OR(MAGIC_ROD, AND(BOMB, BOW), COUNT(SWORD, 2))) # magic rod, l2 sword spins and bomb arrows allow a 3 cycle which avoids the feather wind attack
             boss.connect(pre_boss, AND(BOW, SHIELD)) # limited arrow amount is rough
             
         if options.logic == 'glitched' or options.logic == 'hell':
@@ -45,7 +45,7 @@ class Dungeon7:
                 bottomleft_owl.connect(bottomleftF2_area, AND(attack_hookshot, STONE_BEAK7)) # sideways block push to get to the owl statue (attack_hookshot is already implied from bottomleftF2_area)
             final_pillar.connect(bottomleftF2_area, BOMB) # bomb trigger pillar
             pre_boss.connect(final_pillar, FEATHER) # superjump on top of goomba to extend superjump to boss door plateau
-            boss.connect(pre_boss, OR(BOMB, BOW, HOOKSHOT, MAGIC_ROD)) # use bombs while on staircase to time when evil eagle flies by. Or hit the boss straight above staircase, then use ranged (bow/hookshot/magic rod (l2sword??)) straight down to kill evil eagle offscreen
+            boss.connect(pre_boss, OR(BOMB, BOW, HOOKSHOT, MAGIC_ROD, COUNT(SWORD,2))) # use bombs while on staircase to time when evil eagle flies by. Or hit the boss straight above staircase, then use ranged (bow/hookshot/magic rod/l2 sword straight down to kill evil eagle offscreen
             
             
         if options.logic == 'hell':

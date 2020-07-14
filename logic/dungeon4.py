@@ -41,7 +41,7 @@ class Dungeon4:
             north_crossroads.connect(entrance, FEATHER) # jump across the corners
             after_double_lock.connect(entrance, FEATHER) # jump across the corners
             dungeon4_puddle_before_crossroads.connect(after_double_lock, FEATHER) # With a tight jump feather is enough to cross the puddle without flippers
-            to_the_nightmare_key.connect(before_miniboss, OR(FEATHER, AND(FLIPPERS, PEGASUS_BOOTS))) # With a tight jump feather is enough to reach the top left switch without flippers
+            to_the_nightmare_key.connect(before_miniboss, OR(FEATHER, AND(FLIPPERS, PEGASUS_BOOTS))) # With a tight jump feather is enough to reach the top left switch without flippers, can bonk up 2d section staircase to get to chest
             before_boss.connect(before_miniboss, FEATHER) # jump to the bottom right corner of boss door room
             
         if options.logic == 'glitched' or options.logic == 'hell':    

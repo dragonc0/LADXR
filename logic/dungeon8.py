@@ -63,7 +63,6 @@ class Dungeon8:
         
         if options.logic == 'hard' or options.logic == 'glitched' or options.logic == 'hell':
             up_left.connect(lower_center, AND(BOMB, FEATHER)) # blow up hidden walls from peahat room -> dark room -> eye statue room
-
             slime_chest.connect(entrance, AND(attack_hookshot_powder, POWER_BRACELET))  # kill vire with powder or bombs 
         
         if options.logic == 'glitched' or options.logic == 'hell':
@@ -74,16 +73,17 @@ class Dungeon8:
             upper_center.connect(lower_center, FEATHER) # from up left you can jesus jump / lava swim around the key door next to the boss. Avoid circle referencing up_left + upper_center
             top_left_stairs.connect(up_left, AND(FEATHER, SWORD)) # superjump
             medicine_chest.connect(upper_center, FEATHER) # jesus super jump
+            boss.connect(up_left, AND(NIGHTMARE_KEY8, FEATHER, COUNT(SWORD, 2))) # superjump from up left area to nightmare door, use L2 sword beams to kill hothead circumventing magic rod
 
         if options.logic == 'hell':
             if bottomright_owl:
                 bottomright_owl.connect(entrance, AND(SWORD, POWER_BRACELET, PEGASUS_BOOTS, STONE_BEAK8)) # underground section past mimics, boots bonking across the gap to the ladder
             bottom_right.connect(entrance, AND(SWORD, POWER_BRACELET, PEGASUS_BOOTS)) # underground section past mimics, boots bonking across the gap to the ladder
             entrance.connect(bottomright_pot_chest, AND(FEATHER, SWORD), one_way=True) # use staircase backwards, subpixel manip for superjump past the pots
-            map_chest.connect(bottom_right, AND(POWER_BRACELET, PEGASUS_BOOTS, BOMB)) # underground section south of smasher, use pegasus boots to cross lava pillars
+            bottom_right.connect(entrance_up, AND(POWER_BRACELET, PEGASUS_BOOTS), one_way=True) # underground section south of smasher, use pegasus boots to cross lava pillars. Boots bonk top left corner of zamboni room and water buffer down to the filler
             miniboss.connect(miniboss_entrance, AND(PEGASUS_BOOTS, SWORD)) # get through 2d section with boots bonks
             top_left_stairs.connect(map_chest, AND(PEGASUS_BOOTS, MAGIC_ROD)) # boots bonk + lava buffer from map chest to entrance_up, then boots bonk through 2d section
             nightmare_key.connect(top_left_stairs, AND(PEGASUS_BOOTS, SWORD, KEY8)) # use a boots bonk to cross the 2d section + the lava in cueball room TODO: fix key logic
-            boss.connect(bottom_right, AND(NIGHTMARE_KEY8, POWER_BRACELET, PEGASUS_BOOTS, MAGIC_ROD)) # take staircase to NW zamboni room, boots bonk onto the lava and water buffer all the way down to push the zamboni
+            boss.connect(entrance_up, AND(NIGHTMARE_KEY8, PEGASUS_BOOTS, MAGIC_ROD)) # boots bonk through the room, and boots bonk over the lava
             
         self.entrance = entrance

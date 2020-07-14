@@ -42,6 +42,7 @@ class Dungeon5:
         if options.logic == 'hard' or options.logic == 'glitched' or options.logic == 'hell':
             blade_trap_chest.connect(area2, AND(FEATHER, attack_hookshot_powder))
             boss_key.connect(after_stalfos, AND(FLIPPERS, FEATHER, PEGASUS_BOOTS)) # boots jump across
+            after_stalfos.connect(area2, COUNT(SWORD, 2)) # use l2 sword beams to kill master stalfos, circumventing the bomb requirement
             after_stalfos.connect(after_keyblock_boss, AND(FEATHER, attack_hookshot_powder)) # circumvent stalfos by going past gohma and backwards from boss door
             if butterfly_owl:
                 butterfly_owl.connect(after_stalfos, AND(PEGASUS_BOOTS, STONE_BEAK5)) # boots charge + bonk to cross 2d bridge
