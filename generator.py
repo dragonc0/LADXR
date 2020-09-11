@@ -3,6 +3,7 @@ import binascii
 from romTables import ROMWithTables
 import assembler
 import patches.dungeonEntrances
+import patches.enemies
 import patches.titleScreen
 import patches.aesthetics
 import patches.core
@@ -18,6 +19,7 @@ import patches.chest
 import patches.shop
 import patches.trendy
 import patches.goal
+import patches.hardMode
 import patches.health
 import patches.heartPiece
 import patches.droppedKey
@@ -70,9 +72,10 @@ def generateRom(options, seed, logic, multiworld=None):
     patches.core.cleanup(rom)
     patches.phone.patchPhone(rom)
     patches.core.bugfixWrittingWrongRoomStatus(rom)
+    patches.core.bugfixBossroomTopPush(rom)
     patches.core.bugfixPowderBagSprite(rom)
     patches.owl.removeOwlEvents(rom)
-    patches.bank3e.addBank3E(rom)
+    patches.bank3e.addBank3E(rom, seed)
     patches.bank3f.addBank3F(rom)
     patches.core.removeGhost(rom)
     patches.core.alwaysAllowSecretBook(rom)
@@ -111,6 +114,8 @@ def generateRom(options, seed, logic, multiworld=None):
     # patches.reduceRNG.slowdownThreeOfAKind(rom)
     patches.aesthetics.noSwordMusic(rom)
     patches.aesthetics.reduceMessageLengths(rom)
+    if options.hardMode:
+        patches.hardMode.enableHardMode(rom)
     if options.textmode == 'fast':
         patches.aesthetics.fastText(rom)
     if options.textmode == 'none':
@@ -161,6 +166,7 @@ def generateRom(options, seed, logic, multiworld=None):
             patches.dungeonEntrances.changeEntrances(rom, logic.entranceMapping)
         for spot in logic.iteminfo_list:
             spot.patch(rom, spot.item)
+        patches.enemies.changeBosses(rom, logic.bossMapping)
     else:
         # Set a unique ID in the rom for multiworld
         for n in range(4):
@@ -173,6 +179,7 @@ def generateRom(options, seed, logic, multiworld=None):
         for spot in logic.iteminfo_list:
             if spot.world == multiworld:
                 spot.patch(rom, spot.item)
+        patches.enemies.changeBosses(rom, logic.worlds[multiworld].bossMapping)
 
     patches.titleScreen.setRomInfo(rom, binascii.hexlify(seed).decode("ascii").upper(), options)
 

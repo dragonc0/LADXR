@@ -5,6 +5,7 @@ import randomizer
 import logic
 import patches.dungeonEntrances
 import explorer
+import spoilerLog
 
 
 def main(mainargs=None):
@@ -17,9 +18,13 @@ def main(mainargs=None):
     parser.add_argument('-o', '--output', dest="output_filename", metavar='output rom', type=str, required=False,
         help="Output filename to use. If not specified [seed].gbc is used.")
     parser.add_argument('--dump', dest="dump", action="store_true",
-        help="Dump the logic if the given rom (spoilers!)")
+        help="Dump the logic of the given rom (spoilers!)")
+    parser.add_argument('--spoilerformat', dest="spoilerformat", choices=["none", "console", "text", "json"], default="none",
+        help="Sets the output format for the generated seed's spoiler log")
+    parser.add_argument('--spoilerfilename', dest="spoiler_filename", type=str, required=False,
+        help="Output filename to use for the spoiler log.  If not specified, LADXR_[seed].txt/json is used.")
     parser.add_argument('--test', dest="test", action="store_true",
-        help="Test the logic if the given rom, without showing anything.")
+        help="Test the logic of the given rom, without showing anything.")
     parser.add_argument('-s', '--seed', dest="seed", type=str, required=False,
         help="Generate the specified seed")
     parser.add_argument('--romdebugmode', dest="romdebugmode", action="store_true",
@@ -56,6 +61,8 @@ def main(mainargs=None):
         help="Enables keysanity mode, which shuffles all dungeon items outside dungeons as well.")
     parser.add_argument('--dungeonshuffle', dest="dungeonshuffle", action="store_true",
         help="Enable dungeon shuffle, puts dungeons on different spots.")
+    parser.add_argument('--bossshuffle', dest="bossshuffle", action="store_true",
+        help="Enable boss shuffle, swaps around dungeon bosses.")
     parser.add_argument('--witch', dest="witch", action="store_true",
         help="Enables witch and toadstool in the item pool.")
     parser.add_argument('--hpmode', dest="hpmode", choices=['default', 'inverted', '1'], default='default',
@@ -64,6 +71,8 @@ def main(mainargs=None):
         help="Put the boomerang and the trade with the boomerang in the item pool")
     parser.add_argument('--steal', dest="steal", choices=['never', 'always', 'default'], default='always',
         help="Configure when to allow stealing from the shop.")
+    parser.add_argument('--hard-mode', dest="hardMode", action="store_true",
+        help="Make the game a bit harder, less health from drops, bombs damage yourself, and less iframes.")
     parser.add_argument('--goal', dest="goal", choices=['-1', '0', '1', '2', '3', '4', '5', '6', '7', '8', 'random', 'raft'],
         help="Configure the instrument goal for this rom, anything between 0 and 8.")
     parser.add_argument('--bowwow', dest="bowwow", choices=['normal', 'always', 'swordless'], default='normal',
@@ -126,28 +135,17 @@ def main(mainargs=None):
     if args.dump or args.test:
         print("Loading: %s" % (args.input_filename))
         rom = ROMWithTables(args.input_filename)
-        if rom.banks[0][7] == 0x01:
+
+        if args.spoilerformat == "none":
+            args.spoilerformat = "console"
+
+        try:
+            log = spoilerLog.SpoilerLog(args, rom)
+            log.output(args.spoiler_filename)
+            sys.exit(0)
+        except spoilerLog.RaceRomException:
             print("Cannot read spoiler log for race rom")
             sys.exit(1)
-        dungeon_order = patches.dungeonEntrances.readEntrances(rom)
-        print("Dungeon order:", ", ".join(map(lambda n: "D%d:%d" % (n[0] + 1, n[1] + 1), enumerate(dungeon_order))))
-        my_logic = logic.Logic(args, None, entranceMapping=dungeon_order)
-        for ii in my_logic.iteminfo_list:
-            ii.item = ii.read(rom)
-        e = explorer.Explorer(verbose=args.dump)
-        e.visit(my_logic.start)
-        if len(e.getAccessableLocations()) != len(my_logic.location_list):
-            print("Logic failure! Cannot access all locations.")
-            print("Failed to find:")
-            for loc in my_logic.location_list:
-                if loc not in e.getAccessableLocations():
-                    for ii in loc.items:
-                        print("%20s at %s (%s)" % (ii.read(rom), ii.metadata, ii))
-                        if ii.MULTIWORLD:
-                            if rom.banks[0x00][0x0055] != rom.banks[0x3E][0x3300 + ii.room]:
-                                print("  for player %d" % (rom.banks[0x3E][0x3300 + ii.room] + 1))
-            sys.exit(1)
-        sys.exit(0)
 
     if args.seed:
         try:
