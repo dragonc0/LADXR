@@ -3,6 +3,7 @@ import binascii
 from romTables import ROMWithTables
 import assembler
 import patches.dungeonEntrances
+import patches.startLocation
 import patches.enemies
 import patches.titleScreen
 import patches.aesthetics
@@ -13,6 +14,8 @@ import patches.bank3e
 import patches.bank3f
 import patches.inventory
 import patches.witch
+import patches.tarin
+import patches.fishingMinigame
 import patches.softlock
 import patches.maptweaks
 import patches.chest
@@ -27,9 +30,12 @@ import patches.goldenLeaf
 import patches.songs
 import patches.bowwow
 import patches.desert
+import patches.reduceRNG
 import patches.madBatter
 import patches.tunicFairy
 import patches.seashell
+import patches.instrument
+import patches.endscreen
 import hints
 
 
@@ -68,6 +74,7 @@ def generateRom(options, seed, logic, multiworld=None):
     assembler.const("wLinkSendItemRoomLow", 0xDDFB)
     assembler.const("wLinkSendItemTarget", 0xDDFC)
     assembler.const("wLinkSendItemItem", 0xDDFD)
+    assembler.const("HARD_MODE", 1 if options.hardMode else 0)
 
     patches.core.cleanup(rom)
     patches.phone.patchPhone(rom)
@@ -95,6 +102,8 @@ def generateRom(options, seed, logic, multiworld=None):
     patches.droppedKey.fixDroppedKey(rom)
     patches.madBatter.upgradeMadBatter(rom)
     patches.tunicFairy.upgradeTunicFairy(rom)
+    patches.tarin.updateTarin(rom)
+    patches.fishingMinigame.updateFinishingMinigame(rom)
     patches.health.upgradeHealthContainers(rom)
     if options.owlstatues in ("dungeon", "both"):
         patches.owl.upgradeDungeonOwlStatues(rom)
@@ -103,15 +112,17 @@ def generateRom(options, seed, logic, multiworld=None):
     patches.goldenLeaf.fixGoldenLeaf(rom)
     patches.heartPiece.fixHeartPiece(rom)
     patches.seashell.fixSeashell(rom)
+    patches.instrument.fixInstruments(rom)
     patches.seashell.upgradeMansion(rom)
     patches.songs.upgradeMarin(rom)
     patches.songs.upgradeManbo(rom)
     patches.songs.upgradeMamu(rom)
     patches.bowwow.fixBowwow(rom, everywhere=options.bowwow != 'normal')
-    if options.bowwow == 'swordless':
-        patches.bowwow.swordlessBowwowMapPatches(rom)
+    if options.bowwow != 'normal':
+        patches.bowwow.bowwowMapPatches(rom)
     patches.desert.desertAccess(rom)
     # patches.reduceRNG.slowdownThreeOfAKind(rom)
+    patches.reduceRNG.fixHorseHeads(rom)
     patches.aesthetics.noSwordMusic(rom)
     patches.aesthetics.reduceMessageLengths(rom)
     if options.hardMode:
@@ -144,10 +155,10 @@ def generateRom(options, seed, logic, multiworld=None):
     elif options.hpmode == '1':
         patches.health.setStartHealth(rom, 1)
 
-    if options.goal != "random" and options.goal is not None:
-        patches.goal.setRequiredInstrumentCount(rom, int(options.goal))
     if options.goal == "raft":
         patches.goal.setRaftGoal(rom)
+    elif options.goal != "random" and options.goal is not None:
+        patches.goal.setRequiredInstrumentCount(rom, int(options.goal))
 
     patches.inventory.selectToSwitchSongs(rom)
     if options.quickswap == 'a':
@@ -159,9 +170,10 @@ def generateRom(options, seed, logic, multiworld=None):
     rom.patch(0x00, 0x333D, assembler.ASM("bit 4, e\njr Z, $05"), b"", fill_nop=True)
 
     if multiworld is None:
-        hints.addHints(rom, random, logic.iteminfo_list)
+        hints.addHints(rom, random.Random(seed), logic.iteminfo_list)
 
         # Patch the generated logic into the rom
+        patches.startLocation.setStartLocation(rom, logic.start_house_index)
         if logic.entranceMapping:
             patches.dungeonEntrances.changeEntrances(rom, logic.entranceMapping)
         for spot in logic.iteminfo_list:
@@ -174,6 +186,7 @@ def generateRom(options, seed, logic, multiworld=None):
         rom.patch(0x00, 0x0055, "00", "%02x" % (multiworld))
 
         # Patch the generated logic into the rom
+        patches.startLocation.setStartLocation(rom, logic.worlds[multiworld].start_house_index)
         if logic.worlds[multiworld].entranceMapping:
             patches.dungeonEntrances.changeEntrances(rom, logic.worlds[multiworld].entranceMapping)
         for spot in logic.iteminfo_list:
@@ -182,5 +195,6 @@ def generateRom(options, seed, logic, multiworld=None):
         patches.enemies.changeBosses(rom, logic.worlds[multiworld].bossMapping)
 
     patches.titleScreen.setRomInfo(rom, binascii.hexlify(seed).decode("ascii").upper(), options)
+    patches.endscreen.updateEndScreen(rom)
 
     return rom

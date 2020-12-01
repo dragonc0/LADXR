@@ -51,11 +51,13 @@ def hasConsumableRequirement(requirements):
     if isinstance(requirements, list) or isinstance(requirements, tuple):
         return any(map(hasConsumableRequirement, requirements))
     if isinstance(requirements, COUNT):
-        return isConsumable(requirements.item)
+        return hasConsumableRequirement(requirements.item)
     return isConsumable(requirements)
 
 
 def isConsumable(item):
+    if item is None:
+        return False
     if item.startswith("RUPEES_"):
         return True
     if item.startswith("KEY"):

@@ -39,7 +39,7 @@ def main(mainargs=None):
     # Flags that effect gameplay
     parser.add_argument('--plan', dest="plan", metavar='plandomizer', type=str, required=False,
         help="Read an item placement plan")
-    parser.add_argument('--race', dest="race", action="store_true",
+    parser.add_argument('--race', dest="race", nargs="?", default=False, const=True,
         help="Enable race mode. This generates a rom from which the spoiler log cannot be dumped and the seed cannot be extracted.")
     parser.add_argument('--logic', dest="logic", choices=["normal", "hard", "glitched", "hell"],
         help="Which level of logic is required.")
@@ -55,10 +55,14 @@ def main(mainargs=None):
         help="Enables seashells mode, which randomizes the secret sea shells hiding in the ground/trees. (chest are always randomized)")
     parser.add_argument('--heartcontainers', dest="heartcontainers", action="store_true",
         help="Enables heartcontainer mode, which randomizes the heart containers dropped by bosses.")
+    parser.add_argument('--instruments', dest="instruments", action="store_true",
+        help="Shuffle the instruments in the item pool.")
     parser.add_argument('--owlstatues', dest="owlstatues", choices=['none', 'dungeon', 'overworld', 'both'],
         help="Give the owl statues in dungeons or on the overworld items as well, instead of showing the normal hints")
     parser.add_argument('--keysanity', dest="keysanity", action="store_true",
         help="Enables keysanity mode, which shuffles all dungeon items outside dungeons as well.")
+    parser.add_argument('--randomstartlocation', dest="randomstartlocation", action="store_true",
+        help="Place your starting house at a random location.")
     parser.add_argument('--dungeonshuffle', dest="dungeonshuffle", action="store_true",
         help="Enable dungeon shuffle, puts dungeons on different spots.")
     parser.add_argument('--bossshuffle', dest="bossshuffle", action="store_true",
@@ -75,6 +79,8 @@ def main(mainargs=None):
         help="Make the game a bit harder, less health from drops, bombs damage yourself, and less iframes.")
     parser.add_argument('--goal', dest="goal", choices=['-1', '0', '1', '2', '3', '4', '5', '6', '7', '8', 'random', 'raft'],
         help="Configure the instrument goal for this rom, anything between 0 and 8.")
+    parser.add_argument('--accessibility', dest="accessibility_rule", choices=['all', 'goal'],
+        help="Switches between making sure all locations are reachable or only the goal is reachable")
     parser.add_argument('--bowwow', dest="bowwow", choices=['normal', 'always', 'swordless'], default='normal',
         help="Enables 'good boy mode', where BowWow is allowed on all screens and can damage bosses and more enemies.")
     parser.add_argument('--pool', dest="itempool", choices=['normal', 'casual', 'pain', 'keyup'], default='normal',
@@ -120,16 +126,18 @@ def main(mainargs=None):
         sys.exit(0)
 
     if args.emptyplan:
-        import checkMetadata
         import locations.items
+        import logic
         f = open(args.emptyplan, "wt")
         f.write(";Plandomizer data\n;Items: %s\n" % (", ".join(map(lambda n: getattr(locations.items, n), filter(lambda n: not n.startswith("__"), dir(locations.items))))))
-        for key in dir(locations.items):
-            f.write("")
-        for name, data in sorted(checkMetadata.checkMetadataTable.items(), key=lambda n: str(n[1])):
-            if name is not "None":
-                f.write(";%s\n" % (data))
-                f.write("%s: \n" % (name))
+        f.write(";Modify the item pool:")
+        f.write(";Pool:SWORD:+5")
+        f.write(";Pool:RUPEES_50:-5")
+        iteminfo_list = logic.Logic(args, start_house_index=0, entranceMapping=list(range(9)), bossMapping=list(range(9))).iteminfo_list
+        for ii in sorted(iteminfo_list, key=lambda n: (n.location.dungeon if n.location.dungeon else -1, repr(n.metadata))):
+            if len(ii.OPTIONS) > 1:
+                f.write(";%r\n" % (ii.metadata))
+                f.write("Location:%s: \n" % (ii.nameId))
         sys.exit(0)
 
     if args.dump or args.test:

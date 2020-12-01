@@ -14,20 +14,14 @@ from locations.items import *
 
 
 class Logic:
-    def __init__(self, configuration_options, rnd, *, entranceMapping=None, bossMapping=None):
-        if entranceMapping is None:
-            entranceMapping = list(range(9))
-            if configuration_options.dungeonshuffle:
-                rnd.shuffle(entranceMapping)
+    def __init__(self, configuration_options, *, start_house_index=None, entranceMapping=None, bossMapping=None):
+        self.start_house_index = start_house_index
         self.entranceMapping = entranceMapping
-        if bossMapping is None:
-            bossMapping = list(range(8))
-            if configuration_options.bossshuffle:
-                rnd.shuffle(bossMapping)
-            bossMapping += [8]  # Shuffling the color dungeon boss does not work properly, so we ignore that one.
         self.bossMapping = bossMapping
 
         world = overworld.World(configuration_options)
+
+        world.start.connect(world.start_locations[start_house_index], None)
 
         dungeons = [
             dungeon1.Dungeon1(configuration_options, boss_requirements[bossMapping[0]]),
@@ -40,18 +34,19 @@ class Logic:
             dungeon8.Dungeon8(configuration_options, boss_requirements[bossMapping[7]]),
             dungeonColor.DungeonColor(configuration_options, boss_requirements[bossMapping[8]])
         ]
-
-        dungeons[entranceMapping[0]].entrance.connect(world.start, TAIL_KEY)
-        dungeons[entranceMapping[1]].entrance.connect(world.dungeon2_entrance, OR(BOWWOW, MAGIC_ROD, HOOKSHOT, BOOMERANG, POWER_BRACELET, SWORD)) # requirements handled in dungeon2_entrance
-        dungeons[entranceMapping[2]].entrance.connect(world.dungeon3_entrance, SLIME_KEY)
-        dungeons[entranceMapping[3]].entrance.connect(world.dungeon4_entrance, ANGLER_KEY)
-        dungeons[entranceMapping[4]].entrance.connect(world.dungeon5_entrance, OR(POWER_BRACELET, FEATHER, PEGASUS_BOOTS)) # requirements handled in dungeon5_entrance
-        dungeons[entranceMapping[5]].entrance.connect(world.dungeon6_entrance, FACE_KEY)
-        dungeons[entranceMapping[6]].entrance.connect(world.right_mountains_3, BIRD_KEY)
-        dungeons[entranceMapping[7]].entrance.connect(world.dungeon8_entrance, OR(BOMB, SONG3))
-        dungeons[entranceMapping[8]].entrance.connect(world.graveyard, POWER_BRACELET)
+        
+        dungeons[entranceMapping[0]].entrance.connect(world.dungeon1_entrance, None)
+        dungeons[entranceMapping[1]].entrance.connect(world.dungeon2_entrance, None)
+        dungeons[entranceMapping[2]].entrance.connect(world.dungeon3_entrance, None)
+        dungeons[entranceMapping[3]].entrance.connect(world.dungeon4_entrance, None)
+        dungeons[entranceMapping[4]].entrance.connect(world.dungeon5_entrance, None)
+        dungeons[entranceMapping[5]].entrance.connect(world.dungeon6_entrance, None)
+        dungeons[entranceMapping[6]].entrance.connect(world.dungeon7_entrance, None)
+        dungeons[entranceMapping[7]].entrance.connect(world.dungeon8_entrance, None)
+        dungeons[entranceMapping[8]].entrance.connect(world.dungeon9_entrance, None)
 
         self.start = world.start
+        self.windfish = world.windfish
         self.location_list = []
         self.iteminfo_list = []
 
@@ -108,7 +103,15 @@ class MultiworldLogic:
         self.iteminfo_list = []
 
         for n in range(configuration_options.multiworld):
-            world = Logic(configuration_options.multiworld_options[n], rnd)
+            entranceMapping = list(range(9))
+            bossMapping = list(range(8))
+            if configuration_options.dungeonshuffle:
+                rnd.shuffle(entranceMapping)
+            if configuration_options.bossshuffle:
+                rnd.shuffle(bossMapping)
+            bossMapping += [8]  # Shuffling the color dungeon boss does not work properly, so we ignore that one.
+
+            world = Logic(configuration_options.multiworld_options[n], entranceMapping=entranceMapping, bossMapping=bossMapping)
             for ii in world.iteminfo_list:
                 ii.world = n
 
