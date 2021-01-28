@@ -49,7 +49,11 @@ class Randomizer:
 
         if self.plan:
             for ii in self.__logic.iteminfo_list:
-                ii.forced_item = self.plan.forced_items.get(ii.nameId.upper(), None)
+                item = self.plan.forced_items.get(ii.nameId.upper(), None)
+                if isinstance(item, list):
+                    ii.OPTIONS = item
+                else:
+                    ii.forced_item = item
 
         if not options.keysanity or options.forwardfactor:
             item_placer = ForwardItemPlacer(self.__logic, options.forwardfactor, options.accessibility_rule)
@@ -307,6 +311,7 @@ class ForwardItemPlacer:
         self.__spots.remove(spot)
 
     def run(self, rnd):
+        assert self.canStillPlaceItemPool(), "Sanity check failed %s" % (self.canStillPlaceItemPool(True))
         if sum(self.__item_pool.values()) != len(self.__spots):
             for k, v in sorted(self.__item_pool.items()):
                 print(k, v)

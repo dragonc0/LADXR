@@ -19,7 +19,10 @@ class Logic:
         self.entranceMapping = entranceMapping
         self.bossMapping = bossMapping
 
-        world = overworld.World(configuration_options)
+        if configuration_options.overworld == "dungeondive":
+            world = overworld.DungeonDiveOverworld(configuration_options)
+        else:
+            world = overworld.World(configuration_options)
 
         world.start.connect(world.start_locations[start_house_index], None)
 
@@ -110,8 +113,9 @@ class MultiworldLogic:
             if configuration_options.bossshuffle:
                 rnd.shuffle(bossMapping)
             bossMapping += [8]  # Shuffling the color dungeon boss does not work properly, so we ignore that one.
+            start_house_index = 0
 
-            world = Logic(configuration_options.multiworld_options[n], entranceMapping=entranceMapping, bossMapping=bossMapping)
+            world = Logic(configuration_options.multiworld_options[n], start_house_index=start_house_index, entranceMapping=entranceMapping, bossMapping=bossMapping)
             for ii in world.iteminfo_list:
                 ii.world = n
 
@@ -137,6 +141,10 @@ class MultiworldItemInfoWrapper:
         self.world_count = world_count
         self.target = target
         self.MULTIWORLD_OPTIONS = None
+
+    @property
+    def nameId(self):
+        return self.target.nameId
 
     @property
     def priority(self):
@@ -179,9 +187,13 @@ class MultiworldItemInfoWrapper:
 
 
 def addWorldIdToRequirements(world, req):
+    if req is None:
+        return None
     if isinstance(req, str):
         return "%s_W%d" % (req, world)
     if isinstance(req, COUNT):
+        if isinstance(req.item, list):
+            return COUNT([addWorldIdToRequirements(world, item) for item in req.item], req.amount)
         return COUNT(addWorldIdToRequirements(world, req.item), req.amount)
     if isinstance(req, FOUND):
         return FOUND(addWorldIdToRequirements(world, req.item), req.amount)
