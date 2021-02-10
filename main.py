@@ -57,7 +57,7 @@ def main(mainargs=None):
         help="Enables heartcontainer mode, which randomizes the heart containers dropped by bosses.")
     parser.add_argument('--instruments', dest="instruments", action="store_true",
         help="Shuffle the instruments in the item pool.")
-    parser.add_argument('--owlstatues', dest="owlstatues", choices=['none', 'dungeon', 'overworld', 'both'],
+    parser.add_argument('--owlstatues', dest="owlstatues", choices=['none', 'dungeon', 'overworld', 'both'], default='none',
         help="Give the owl statues in dungeons or on the overworld items as well, instead of showing the normal hints")
     parser.add_argument('--keysanity', dest="keysanity", action="store_true",
         help="Enables keysanity mode, which shuffles all dungeon items outside dungeons as well.")
@@ -65,8 +65,10 @@ def main(mainargs=None):
         help="Place your starting house at a random location.")
     parser.add_argument('--dungeonshuffle', dest="dungeonshuffle", action="store_true",
         help="Enable dungeon shuffle, puts dungeons on different spots.")
-    parser.add_argument('--bossshuffle', dest="bossshuffle", action="store_true",
+    parser.add_argument('--boss', dest="boss", choices=["default", "shuffle", "random"], default="default",
         help="Enable boss shuffle, swaps around dungeon bosses.")
+    parser.add_argument('--miniboss', dest="miniboss", choices=["default", "shuffle", "random"], default="default",
+        help="Shuffle the minibosses or just randomize them.")
     parser.add_argument('--witch', dest="witch", action="store_true",
         help="Enables witch and toadstool in the item pool.")
     parser.add_argument('--hpmode', dest="hpmode", choices=['default', 'inverted', '1'], default='default',
@@ -77,7 +79,7 @@ def main(mainargs=None):
         help="Configure when to allow stealing from the shop.")
     parser.add_argument('--hard-mode', dest="hardMode", action="store_true",
         help="Make the game a bit harder, less health from drops, bombs damage yourself, and less iframes.")
-    parser.add_argument('--goal', dest="goal", choices=['-1', '0', '1', '2', '3', '4', '5', '6', '7', '8', 'random', 'raft'],
+    parser.add_argument('--goal', dest="goal", choices=['-1', '0', '1', '2', '3', '4', '5', '6', '7', '8', 'random', 'raft', 'seashells'], default='8',
         help="Configure the instrument goal for this rom, anything between 0 and 8.")
     parser.add_argument('--accessibility', dest="accessibility_rule", choices=['all', 'goal'],
         help="Switches between making sure all locations are reachable or only the goal is reachable")

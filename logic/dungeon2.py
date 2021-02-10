@@ -4,7 +4,7 @@ from locations import *
 
 
 class Dungeon2:
-    def __init__(self, options, boss_requirement):
+    def __init__(self, options, world_setup):
         entrance = Location(2)
         Location(2).add(DungeonChest(0x136)).connect(entrance, POWER_BRACELET)  # chest at entrance
         dungeon2_l2 = Location(2).connect(entrance, AND(KEY2, FOUND(KEY2, 5)))  # towards map chest
@@ -15,9 +15,9 @@ class Dungeon2:
         if options.owlstatues == "both" or options.owlstatues == "dungeon":
             Location(2).add(OwlStatue(0x133)).connect(dungeon2_r2, STONE_BEAK2)
         dungeon2_r3 = Location(2).add(DungeonChest(0x138)).connect(dungeon2_r2, attack)  # first chest with key
-        dungeon2_r4 = Location(2).add(DungeonChest(0x139)).connect(dungeon2_r3, FEATHER) # button spawn chest
-        shyguy_key_drop = Location(2).add(DroppedKey(0x134)).connect(dungeon2_r3, OR(rear_attack, AND(FEATHER, rear_attack_range))) # shyguy drop key
-        dungeon2_r5 = Location(2).add(DungeonChest(0x126)).add(DungeonChest(0x121)).connect(dungeon2_r4, AND(KEY2, FOUND(KEY2, 3), attack_hookshot)) # post hinox
+        dungeon2_r4 = Location(2).add(DungeonChest(0x139)).connect(dungeon2_r3, FEATHER)  # button spawn chest
+        shyguy_key_drop = Location(2).add(DroppedKey(0x134)).connect(dungeon2_r3, OR(rear_attack, AND(FEATHER, rear_attack_range)))  # shyguy drop key
+        dungeon2_r5 = Location(2).add(DungeonChest(0x126)).add(DungeonChest(0x121)).connect(dungeon2_r4, AND(KEY2, FOUND(KEY2, 3), miniboss_requirements[world_setup.miniboss_mapping[1]]))  # post hinox
         if options.owlstatues == "both" or options.owlstatues == "dungeon":
             Location(2).add(OwlStatue(0x129), OwlStatue(0x12F)).connect(dungeon2_r5, STONE_BEAK2)
         dungeon2_ghosts_room = Location(2).connect(dungeon2_r5, AND(KEY2, FOUND(KEY2, 4)))
@@ -26,7 +26,7 @@ class Dungeon2:
         dungeon2_boss_key = Location(2).add(DungeonChest(0x127)).connect(dungeon2_r6, OR(BOW, BOMB, MAGIC_ROD, OCARINA, POWER_BRACELET)) # TODO: song 1
         dungeon2_pre_boss = Location(2).connect(dungeon2_r6, AND(POWER_BRACELET, FEATHER, KEY2, FOUND(KEY2, 5)))
         # If we can get here, we have everything for the boss. So this is also the goal room.
-        dungeon2_boss = Location(2).add(HeartContainer(0x12B), Instrument(0x12a)).connect(dungeon2_pre_boss, AND(NIGHTMARE_KEY2, boss_requirement, FEATHER))
+        dungeon2_boss = Location(2).add(HeartContainer(0x12B), Instrument(0x12a)).connect(dungeon2_pre_boss, AND(NIGHTMARE_KEY2, boss_requirements[world_setup.boss_mapping[1]], FEATHER))
         
         if options.logic == 'glitched' or options.logic == 'hell':
             dungeon2_ghosts_chest.connect(dungeon2_ghosts_room, SWORD) # use sword to spawn ghosts on other side of the room so they run away (logically irrelevant because of torches at start)

@@ -11,42 +11,60 @@ from . import dungeonColor
 from .requirements import AND, OR, COUNT, FOUND, boss_requirements
 from .location import Location
 from locations.items import *
+from worldSetup import WorldSetup
 
 
 class Logic:
-    def __init__(self, configuration_options, *, start_house_index=None, entranceMapping=None, bossMapping=None):
-        self.start_house_index = start_house_index
-        self.entranceMapping = entranceMapping
-        self.bossMapping = bossMapping
+    def __init__(self, configuration_options, *, world_setup):
+        self.world_setup = world_setup
 
         if configuration_options.overworld == "dungeondive":
             world = overworld.DungeonDiveOverworld(configuration_options)
         else:
-            world = overworld.World(configuration_options)
+            world = overworld.World(configuration_options, world_setup)
 
-        world.start.connect(world.start_locations[start_house_index], None)
+        world.start.connect(world.start_locations[world_setup.start_house_index], None)
 
         dungeons = [
-            dungeon1.Dungeon1(configuration_options, boss_requirements[bossMapping[0]]),
-            dungeon2.Dungeon2(configuration_options, boss_requirements[bossMapping[1]]),
-            dungeon3.Dungeon3(configuration_options, boss_requirements[bossMapping[2]]),
-            dungeon4.Dungeon4(configuration_options, boss_requirements[bossMapping[3]]),
-            dungeon5.Dungeon5(configuration_options, boss_requirements[bossMapping[4]]),
-            dungeon6.Dungeon6(configuration_options, boss_requirements[bossMapping[5]]),
-            dungeon7.Dungeon7(configuration_options, boss_requirements[bossMapping[6]]),
-            dungeon8.Dungeon8(configuration_options, boss_requirements[bossMapping[7]]),
-            dungeonColor.DungeonColor(configuration_options, boss_requirements[bossMapping[8]])
+            dungeon1.Dungeon1(configuration_options, world_setup),
+            dungeon2.Dungeon2(configuration_options, world_setup),
+            dungeon3.Dungeon3(configuration_options, world_setup),
+            dungeon4.Dungeon4(configuration_options, world_setup),
+            dungeon5.Dungeon5(configuration_options, world_setup),
+            dungeon6.Dungeon6(configuration_options, world_setup),
+            dungeon7.Dungeon7(configuration_options, world_setup),
+            dungeon8.Dungeon8(configuration_options, world_setup),
+            dungeonColor.DungeonColor(configuration_options, world_setup)
         ]
-        
-        dungeons[entranceMapping[0]].entrance.connect(world.dungeon1_entrance, None)
-        dungeons[entranceMapping[1]].entrance.connect(world.dungeon2_entrance, None)
-        dungeons[entranceMapping[2]].entrance.connect(world.dungeon3_entrance, None)
-        dungeons[entranceMapping[3]].entrance.connect(world.dungeon4_entrance, None)
-        dungeons[entranceMapping[4]].entrance.connect(world.dungeon5_entrance, None)
-        dungeons[entranceMapping[5]].entrance.connect(world.dungeon6_entrance, None)
-        dungeons[entranceMapping[6]].entrance.connect(world.dungeon7_entrance, None)
-        dungeons[entranceMapping[7]].entrance.connect(world.dungeon8_entrance, None)
-        dungeons[entranceMapping[8]].entrance.connect(world.dungeon9_entrance, None)
+
+        dungeons[world_setup.dungeon_entrance_mapping[0]].entrance.connect(world.dungeon1_entrance, None)
+        dungeons[world_setup.dungeon_entrance_mapping[1]].entrance.connect(world.dungeon2_entrance, None)
+        dungeons[world_setup.dungeon_entrance_mapping[2]].entrance.connect(world.dungeon3_entrance, None)
+        dungeons[world_setup.dungeon_entrance_mapping[3]].entrance.connect(world.dungeon4_entrance, None)
+        dungeons[world_setup.dungeon_entrance_mapping[4]].entrance.connect(world.dungeon5_entrance, None)
+        dungeons[world_setup.dungeon_entrance_mapping[5]].entrance.connect(world.dungeon6_entrance, None)
+        dungeons[world_setup.dungeon_entrance_mapping[6]].entrance.connect(world.dungeon7_entrance, None)
+        dungeons[world_setup.dungeon_entrance_mapping[7]].entrance.connect(world.dungeon8_entrance, None)
+        dungeons[world_setup.dungeon_entrance_mapping[8]].entrance.connect(world.dungeon9_entrance, None)
+
+        egg_trigger = AND(OCARINA, SONG1)
+        if configuration_options.logic == 'glitched' or configuration_options.logic == 'hell':
+            egg_trigger = OR(AND(OCARINA, SONG1), BOMB)
+
+        if configuration_options.goal == "seashells":
+            world.nightmare.connect(world.egg, COUNT(SEASHELL, 20))
+        elif configuration_options.goal == "raft":
+            world.nightmare.connect(world.egg, egg_trigger)
+        else:
+            goal = int(configuration_options.goal)
+            if goal < 0:
+                world.nightmare.connect(world.egg, None)
+            elif goal == 0:
+                world.nightmare.connect(world.egg, egg_trigger)
+            elif goal == 8:
+                world.nightmare.connect(world.egg, AND(egg_trigger, INSTRUMENT1, INSTRUMENT2, INSTRUMENT3, INSTRUMENT4, INSTRUMENT5, INSTRUMENT6, INSTRUMENT7, INSTRUMENT8))
+            else:
+                world.nightmare.connect(world.egg, AND(egg_trigger, COUNT([INSTRUMENT1, INSTRUMENT2, INSTRUMENT3, INSTRUMENT4, INSTRUMENT5, INSTRUMENT6, INSTRUMENT7, INSTRUMENT8], goal)))
 
         self.start = world.start
         self.windfish = world.windfish
@@ -106,16 +124,9 @@ class MultiworldLogic:
         self.iteminfo_list = []
 
         for n in range(configuration_options.multiworld):
-            entranceMapping = list(range(9))
-            bossMapping = list(range(8))
-            if configuration_options.dungeonshuffle:
-                rnd.shuffle(entranceMapping)
-            if configuration_options.bossshuffle:
-                rnd.shuffle(bossMapping)
-            bossMapping += [8]  # Shuffling the color dungeon boss does not work properly, so we ignore that one.
-            start_house_index = 0
-
-            world = Logic(configuration_options.multiworld_options[n], start_house_index=start_house_index, entranceMapping=entranceMapping, bossMapping=bossMapping)
+            world_setup = WorldSetup()
+            world_setup.randomize(configuration_options, rnd)
+            world = Logic(configuration_options.multiworld_options[n], world_setup=world_setup)
             for ii in world.iteminfo_list:
                 ii.world = n
 

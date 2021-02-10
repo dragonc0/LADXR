@@ -7,7 +7,7 @@ DEFAULT_ITEM_POOL = {
     FEATHER: 1,
     HOOKSHOT: 1,
     BOW: 1,
-    BOMB: 2,
+    BOMB: 1,
     MAGIC_POWDER: 1,
     MAGIC_ROD: 1,
     OCARINA: 1,
@@ -139,6 +139,11 @@ class ItemPool:
                 for n in range(9):
                     self.remove("STONE_BEAK%d" % (n + 1))
                     self.add("KEY%d" % (n +1))
+
+        if options.goal == "seashells":
+            for n in range(8):
+                self.remove("INSTRUMENT%d" % (n + 1))
+            self.add(SEASHELL, 8)
 
         if options.overworld == "dungeondive":
             self.remove(SWORD)

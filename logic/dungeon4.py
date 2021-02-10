@@ -4,7 +4,7 @@ from locations import *
 
 
 class Dungeon4:
-    def __init__(self, options, boss_requirement):
+    def __init__(self, options, world_setup):
         entrance = Location(4)
         entrance.add(DungeonChest(0x179))  # stone slab chest
         entrance.add(DungeonChest(0x16A))  # map chest
@@ -24,14 +24,14 @@ class Dungeon4:
         Location(4).add(DungeonChest(0x16E)).connect(before_miniboss, FLIPPERS)  # chest with 50 rupees
         before_miniboss.add(DungeonChest(0x16D))  # gel chest
         before_miniboss.add(DungeonChest(0x168))  # key chest near the puzzle
-        miniboss = Location(4).connect(before_miniboss, OR(FLIPPERS, AND(KEY4, FOUND(KEY4, 5), POWER_BRACELET, SWORD))) # flippers to move around miniboss through 5 tile room
+        miniboss = Location(4).connect(before_miniboss, OR(FLIPPERS, AND(KEY4, FOUND(KEY4, 5), POWER_BRACELET, miniboss_requirements[world_setup.miniboss_mapping[3]]))) # flippers to move around miniboss through 5 tile room
         miniboss.add(DungeonChest(0x160))  # flippers chest
 
         to_the_nightmare_key = Location(4).connect(before_miniboss, AND(FEATHER, OR(FLIPPERS, PEGASUS_BOOTS)))  # 5 symbol puzzle (does not need flippers with boots + feather)
         to_the_nightmare_key.add(DungeonChest(0x176))
 
         before_boss = Location(4).connect(before_miniboss, AND(attack_hookshot, FLIPPERS, KEY4, FOUND(KEY4, 5)))
-        boss = Location(4).add(HeartContainer(0x166), Instrument(0x162)).connect(before_boss, AND(NIGHTMARE_KEY4, boss_requirement))
+        boss = Location(4).add(HeartContainer(0x166), Instrument(0x162)).connect(before_boss, AND(NIGHTMARE_KEY4, boss_requirements[world_setup.boss_mapping[3]]))
 
         if options.logic == 'hard' or options.logic == 'glitched' or options.logic == 'hell':
             sidescroller_key.connect(before_miniboss, AND(FEATHER, BOOMERANG)) # grab the key jumping over the water and boomerang downwards

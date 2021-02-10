@@ -6,7 +6,7 @@ from locations import *
 #       Logic does not account for you wasting this key (maybe remove the keyblock?)
 
 class Dungeon5:
-    def __init__(self, options, boss_requirement):
+    def __init__(self, options, world_setup):
         entrance = Location(5)
         start_hookshot_chest = Location(5).add(DungeonChest(0x1A0)).connect(entrance, HOOKSHOT)
         compass = Location(5).add(DungeonChest(0x19E)).connect(entrance, attack_hookshot_powder)
@@ -17,7 +17,7 @@ class Dungeon5:
             Location(5).add(OwlStatue(0x19A)).connect(area2, STONE_BEAK5)
         Location(5).add(DungeonChest(0x19B)).connect(area2, attack_hookshot_powder)  # map chest
         blade_trap_chest = Location(5).add(DungeonChest(0x197)).connect(area2, HOOKSHOT)  # key chest on the left
-        post_gohma = Location(5).connect(area2, AND(HOOKSHOT, KEY5)) # staircase after gohma
+        post_gohma = Location(5).connect(area2, AND(HOOKSHOT, miniboss_requirements[world_setup.miniboss_mapping[4]], KEY5)) # staircase after gohma
         staircase_before_boss = Location(5).connect(post_gohma, AND(HOOKSHOT, FEATHER)) # bottom right section pits room before boss door. Path via gohma
         after_keyblock_boss = Location(5).connect(staircase_before_boss, AND(KEY5, FOUND(KEY5, 3))) # top right section pits room before boss door
         after_stalfos = Location(5).add(DungeonChest(0x196)).connect(area2, AND(SWORD, BOMB)) # Need to defeat master stalfos once for this empty chest; l2 sword beams kill but obscure
@@ -34,7 +34,7 @@ class Dungeon5:
         stone_tablet = Location(5).add(DungeonChest(0x183)).connect(north_of_crossroads, AND(POWER_BRACELET, attack_skeleton))  # stone tablet
         boss_key = Location(5).add(DungeonChest(0x186)).connect(after_stalfos, AND(FLIPPERS, HOOKSHOT))  # nightmare key
         before_boss = Location(5).connect(after_keyblock_boss, HOOKSHOT) 
-        boss = Location(5).add(HeartContainer(0x185), Instrument(0x182)).connect(before_boss, AND(boss_requirement, NIGHTMARE_KEY5))
+        boss = Location(5).add(HeartContainer(0x185), Instrument(0x182)).connect(before_boss, AND(boss_requirements[world_setup.boss_mapping[4]], NIGHTMARE_KEY5))
 
         # When we can reach the stone tablet chest, we can also reach the final location of master stalfos
         m_stalfos_drop = Location(5).add(HookshotDrop()).connect(third_arena, AND(FEATHER, SWORD, BOMB)) # can reach fourth arena from entrance with feather and sword

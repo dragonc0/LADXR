@@ -20,6 +20,7 @@ import patches.fishingMinigame
 import patches.softlock
 import patches.maptweaks
 import patches.chest
+import patches.bomb
 import patches.shop
 import patches.trendy
 import patches.goal
@@ -52,11 +53,13 @@ def generateRom(options, seed, logic, multiworld=None):
     expanded_inventory = options.witch or options.boomerang == 'gift'
     assembler.resetConsts()
     if expanded_inventory:
+        assembler.const("INV_SIZE", 16)
         assembler.const("wHasFlippers", 0xDB3E)
         assembler.const("wHasMedicine", 0xDB3F)
         assembler.const("wTradeSequenceItem", 0xDB40)
         assembler.const("wSeashellsCount", 0xDB41)
     else:
+        assembler.const("INV_SIZE", 12)
         assembler.const("wHasFlippers", 0xDB0C)
         assembler.const("wHasMedicine", 0xDB0D)
         assembler.const("wTradeSequenceItem", 0xDB0E)
@@ -126,8 +129,10 @@ def generateRom(options, seed, logic, multiworld=None):
         patches.overworld.createDungeonOnlyOverworld(rom)
     # patches.reduceRNG.slowdownThreeOfAKind(rom)
     patches.reduceRNG.fixHorseHeads(rom)
+    patches.bomb.onlyDropBombsWhenHaveBombs(rom)
     patches.aesthetics.noSwordMusic(rom)
     patches.aesthetics.reduceMessageLengths(rom)
+    patches.aesthetics.allowColorDungeonSpritesEverywhere(rom)
     if options.hardMode:
         patches.hardMode.enableHardMode(rom)
     if options.textmode == 'fast':
@@ -160,6 +165,8 @@ def generateRom(options, seed, logic, multiworld=None):
 
     if options.goal == "raft":
         patches.goal.setRaftGoal(rom)
+    elif options.goal == "seashells":
+        patches.goal.setSeashellGoal(rom, 20)
     elif options.goal != "random" and options.goal is not None:
         patches.goal.setRequiredInstrumentCount(rom, int(options.goal))
 
@@ -176,12 +183,12 @@ def generateRom(options, seed, logic, multiworld=None):
         hints.addHints(rom, random.Random(seed), logic.iteminfo_list)
 
         # Patch the generated logic into the rom
-        patches.startLocation.setStartLocation(rom, logic.start_house_index)
-        if logic.entranceMapping:
-            patches.dungeonEntrances.changeEntrances(rom, logic.entranceMapping)
+        patches.startLocation.setStartLocation(rom, logic.world_setup.start_house_index)
+        patches.dungeonEntrances.changeEntrances(rom, logic.world_setup.dungeon_entrance_mapping)
         for spot in logic.iteminfo_list:
             spot.patch(rom, spot.item)
-        patches.enemies.changeBosses(rom, logic.bossMapping)
+        patches.enemies.changeBosses(rom, logic.world_setup.boss_mapping)
+        patches.enemies.changeMiniBosses(rom, logic.world_setup.miniboss_mapping)
     else:
         # Set a unique ID in the rom for multiworld
         for n in range(4):
@@ -189,13 +196,14 @@ def generateRom(options, seed, logic, multiworld=None):
         rom.patch(0x00, 0x0055, "00", "%02x" % (multiworld))
 
         # Patch the generated logic into the rom
-        patches.startLocation.setStartLocation(rom, logic.worlds[multiworld].start_house_index)
-        if logic.worlds[multiworld].entranceMapping:
-            patches.dungeonEntrances.changeEntrances(rom, logic.worlds[multiworld].entranceMapping)
+        patches.startLocation.setStartLocation(rom, logic.worlds[multiworld].world_setup.start_house_index)
+        if logic.worlds[multiworld].world_setup.entrance_mapping:
+            patches.dungeonEntrances.changeEntrances(rom, logic.worlds[multiworld].world_setup.dungeon_entrance_mapping)
         for spot in logic.iteminfo_list:
             if spot.world == multiworld:
                 spot.patch(rom, spot.item)
-        patches.enemies.changeBosses(rom, logic.worlds[multiworld].bossMapping)
+        patches.enemies.changeBosses(rom, logic.worlds[multiworld].world_setup.boss_mapping)
+        patches.enemies.changeMiniBosses(rom, logic.worlds[multiworld].world_setup.miniboss_mapping)
 
     patches.core.warpHome(rom)  # Needs to be done after setting the start location.
     patches.titleScreen.setRomInfo(rom, binascii.hexlify(seed).decode("ascii").upper(), options)

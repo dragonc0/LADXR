@@ -6,11 +6,14 @@ import patches.witch
 import patches.startLocation
 import patches.dungeonEntrances
 import patches.enemies
+from worldSetup import WorldSetup
+
 
 class RaceRomException(Exception):
     pass
 
-class SpoilerItemInfo():
+
+class SpoilerItemInfo:
     def __init__(self, ii, rom, multiworld):
         self.id = ii.nameId
         self.area = ii.metadata.area
@@ -30,12 +33,13 @@ class SpoilerItemInfo():
 
         result = "%25s at %s - %s" % (itemName, self.area, self.locationName)
 
-        if self.sphere != None:
+        if self.sphere is not None:
             result += " (Sphere %d)" % self.sphere
 
         return result
 
-class SpoilerLog():
+
+class SpoilerLog:
     def __init__(self, args, rom):
         if rom.banks[0][7] == 0x01:
             raise RaceRomException()
@@ -44,9 +48,6 @@ class SpoilerLog():
         self.testOnly = args.test
         self.accessibleItems = []
         self.inaccessibleItems = None
-        self.start_house_index = patches.startLocation.readStartLocation(rom)
-        self.dungeonOrder = patches.dungeonEntrances.readEntrances(rom)
-        self.bossMapping = patches.enemies.readBossMapping(rom)
         self.outputFormat = args.spoilerformat
 
         # Assume the broadest settings if we're dumping a seed we didn't just create
@@ -61,10 +62,13 @@ class SpoilerLog():
             args.heartcontainers = True
             args.owlstatues = "both"
 
+        self.world_setup = WorldSetup()
+        self.world_setup.loadFromRom(rom)
+
         self._loadItems(args, rom)
     
     def _loadItems(self, args, rom):
-        my_logic = logic.Logic(args, start_house_index=self.start_house_index, entranceMapping=self.dungeonOrder, bossMapping=self.bossMapping)
+        my_logic = logic.Logic(args, world_setup=self.world_setup)
         remainingItems = set(my_logic.iteminfo_list)
 
         currentSphere = 0
@@ -88,7 +92,8 @@ class SpoilerLog():
                 for ii in location.items:
                     ii.metadata.sphere = currentSphere
                     ii.item = itemContents[ii]
-                    remainingItems.remove(ii)
+                    if ii in remainingItems:
+                        remainingItems.remove(ii)
             
             lastAccessibleLocations = e.getAccessableLocations()
             currentSphere += 1
@@ -143,13 +148,13 @@ class SpoilerLog():
 
     def __repr__(self):
         if not self.testOnly:
-            lines = ["Dungeon order:" + ", ".join(map(lambda n: "D%d:%d" % (n[0] + 1, n[1] + 1), enumerate(self.dungeonOrder)))]
-            lines += [str(x) for x in sorted(self.accessibleItems, key=lambda x: (x.sphere if x.sphere != None else sys.maxsize, x.area, x.locationName))]
+            lines = ["Dungeon order:" + ", ".join(map(lambda n: "D%d:%d" % (n[0] + 1, n[1] + 1), enumerate(self.world_setup.dungeon_entrance_mapping)))]
+            lines += [str(x) for x in sorted(self.accessibleItems, key=lambda x: (x.sphere if x.sphere is not None else sys.maxsize, x.area, x.locationName))]
 
         if self.inaccessibleItems:
             lines.append("Logic failure! Cannot access all locations.")
             lines.append("Failed to find:")
-            lines += [str(x) for x in sorted(self.inaccessibleItems, key=lambda x: (x.sphere if x.sphere != None else sys.maxsize, x.area, x.locationName))]
+            lines += [str(x) for x in sorted(self.inaccessibleItems, key=lambda x: (x.sphere if x.sphere is not None else sys.maxsize, x.area, x.locationName))]
         else:
             lines.append("Success!  All locations can be accessed.")
         

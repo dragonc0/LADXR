@@ -10,6 +10,7 @@ import generator
 import spoilerLog
 import itempool
 from plan import Plan
+from worldSetup import WorldSetup
 
 
 class Error(Exception):
@@ -34,18 +35,9 @@ class Randomizer:
         if options.multiworld:
             self.__logic = logic.MultiworldLogic(options, self.rnd)
         else:
-            start_house_index = 0
-            entranceMapping = list(range(9))
-            bossMapping = list(range(8))
-            if options.randomstartlocation:
-                start_house_index = self.rnd.randint(0, 7)
-            if options.dungeonshuffle:
-                self.rnd.shuffle(entranceMapping)
-            if options.bossshuffle:
-                self.rnd.shuffle(bossMapping)
-            bossMapping += [8]  # Shuffling the color dungeon boss does not work properly, so we ignore that one.
-
-            self.__logic = logic.Logic(options, start_house_index=start_house_index, entranceMapping=entranceMapping, bossMapping=bossMapping)
+            world_setup = WorldSetup()
+            world_setup.randomize(options, self.rnd)
+            self.__logic = logic.Logic(options, world_setup=world_setup)
 
         if self.plan:
             for ii in self.__logic.iteminfo_list:

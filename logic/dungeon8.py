@@ -4,7 +4,7 @@ from locations import *
 
 
 class Dungeon8:
-    def __init__(self, options, boss_requirement):
+    def __init__(self, options, world_setup):
         entrance = Location(8)
         entrance_up = Location(8).connect(entrance, FEATHER)
         entrance_left = Location(8).connect(entrance, attack_hookshot_no_bomb) # past hinox
@@ -38,7 +38,7 @@ class Dungeon8:
         middle_center_2 = Location(8).connect(middle_center_1, AND(KEY8, FOUND(KEY8, 4)))
         middle_center_3 = Location(8).connect(middle_center_2, KEY8)
         miniboss_entrance = Location(8).connect(middle_center_3, AND(HOOKSHOT, KEY8, FOUND(KEY8, 5))) # hookshot to get across to keyblock, 5 to make vanilla possible
-        miniboss = Location(8).connect(miniboss_entrance, AND(FEATHER, SWORD))  # feather for 2d section, sword to kill
+        miniboss = Location(8).connect(miniboss_entrance, AND(FEATHER, miniboss_requirements[world_setup.miniboss_mapping[7]]))  # feather for 2d section, sword to kill
         miniboss.add(DungeonChest(0x237)) # fire rod chest
 
         up_left = Location(8).connect(upper_center, AND(attack_hookshot_powder, AND(KEY8, FOUND(KEY8, 4))))
@@ -59,7 +59,7 @@ class Dungeon8:
         # The south walls of center dark room can be bombed from lower_center too with bomb and feather for center dark room access from the south, allowing even more access. Not sure if this should be logic since "obscure"
         middle_center_2.connect(up_left, AND(BOMB, FEATHER), one_way=True) # does this even skip a key? both middle_center_2 and up_left come from upper_center with 1 extra key
 
-        boss = Location(8).add(HeartContainer(0x234), Instrument(0x230)).connect(entrance_up, AND(NIGHTMARE_KEY8, FEATHER, boss_requirement))
+        boss = Location(8).add(HeartContainer(0x234), Instrument(0x230)).connect(entrance_up, AND(NIGHTMARE_KEY8, FEATHER, boss_requirements[world_setup.boss_mapping[7]]))
         
         if options.logic == 'hard' or options.logic == 'glitched' or options.logic == 'hell':
             up_left.connect(lower_center, AND(BOMB, FEATHER)) # blow up hidden walls from peahat room -> dark room -> eye statue room

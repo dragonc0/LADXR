@@ -4,7 +4,7 @@ from locations import *
 
 
 class DungeonColor:
-    def __init__(self, options, boss_requirement):
+    def __init__(self, options, world_setup):
         entrance = Location(9)
         room2 = Location(9).connect(entrance, attack_hookshot_powder)
         room2.add(DungeonChest(0x314))  # key
@@ -16,15 +16,15 @@ class DungeonColor:
         room2_lights.add(DungeonChest(0x30F))  # compass chest
         room2_lights.add(DroppedKey(0x308))
 
-        Location(9).connect(room2, AND(KEY9, FOUND(KEY9, 3), MAGIC_POWDER)).add(DungeonChest(0x302))  # nightmare key after slime mini boss
-        room3 = Location(9).connect(room2_weapon, AND(KEY9, FOUND(KEY9, 2))) # After the miniboss
+        Location(9).connect(room2, AND(KEY9, FOUND(KEY9, 3), miniboss_requirements[world_setup.miniboss_mapping["c2"]])).add(DungeonChest(0x302))  # nightmare key after slime mini boss
+        room3 = Location(9).connect(room2_weapon, AND(KEY9, FOUND(KEY9, 2), miniboss_requirements[world_setup.miniboss_mapping["c1"]])) # After the miniboss
         room4 = Location(9).connect(room3, POWER_BRACELET)  # need to lift a pot to reveal button
         room4.add(DungeonChest(0x306))  # map
         room4.add(DroppedKey(0x307))
         if options.owlstatues == "both" or options.owlstatues == "dungeon":
             Location(9).add(OwlStatue(0x30A)).connect(room4, STONE_BEAK9)
         room5 = Location(9).connect(room4, AND(KEY9, FOUND(KEY9, 3)))  # before the boss
-        boss = Location(9).connect(room5, AND(NIGHTMARE_KEY9, boss_requirement))
+        boss = Location(9).connect(room5, AND(NIGHTMARE_KEY9, boss_requirements[world_setup.boss_mapping[8]]))
         boss.add(TunicFairy(0), TunicFairy(1))
         
         if options.logic == 'hard' or options.logic == 'glitched':

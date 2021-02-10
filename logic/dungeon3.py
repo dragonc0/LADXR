@@ -4,7 +4,7 @@ from locations import *
 
 
 class Dungeon3:
-    def __init__(self, options, boss_requirement):
+    def __init__(self, options, world_setup):
         entrance = Location(3)
         dungeon3_reverse_eye = Location(3).add(DungeonChest(0x153)).connect(entrance, PEGASUS_BOOTS) # Right side reverse eye
         area2 = Location(3).connect(entrance, POWER_BRACELET)
@@ -34,7 +34,7 @@ class Dungeon3:
         Location(3).add(DroppedKey(0x14D)).connect(area_right, attack_hookshot_powder)  # key after the stairs.
 
         dungeon3_nightmare_key_chest = Location(3).add(DungeonChest(0x147)).connect(area_right, AND(BOMB, FEATHER, PEGASUS_BOOTS))  # nightmare key chest
-        dungeon3_post_dodongo_chest = Location(3).add(DungeonChest(0x146)).connect(area_right, BOMB)  # boots after the miniboss
+        dungeon3_post_dodongo_chest = Location(3).add(DungeonChest(0x146)).connect(area_right, miniboss_requirements[world_setup.miniboss_mapping[2]])  # boots after the miniboss
         compass_chest = Location(3).add(DungeonChest(0x142)).connect(area_right, OR(SWORD, BOMB, AND(SHIELD, attack_hookshot_powder))) # bomb only activates with sword, bomb or shield
         dungeon3_3_bombite_room = Location(3).add(DroppedKey(0x141)).connect(compass_chest, BOMB) # 3 bombite room
         dungeon3_3_bombite_room.connect(area_right, BOOMERANG) # 3 bombite room from the left side, grab item with boomerang
@@ -52,7 +52,7 @@ class Dungeon3:
         pre_boss = Location(3).connect(towards_boss4, AND(attack_no_boomerang, FEATHER, PEGASUS_BOOTS))
         pre_boss.add(DroppedKey(0x15B))
 
-        boss = Location(3).add(HeartContainer(0x15A), Instrument(0x159)).connect(pre_boss, AND(NIGHTMARE_KEY3, boss_requirement))
+        boss = Location(3).add(HeartContainer(0x15A), Instrument(0x159)).connect(pre_boss, AND(NIGHTMARE_KEY3, boss_requirements[world_setup.boss_mapping[2]]))
 
         if not options.keysanity:
             # Without keysanity we need to fix the keylogic here, else we can never generate proper placement.

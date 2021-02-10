@@ -4,10 +4,9 @@ from locations import *
 
 
 class World:
-    def __init__(self, options):
+    def __init__(self, options, world_setup):
         start_house = Location().add(StartItem())
         mabe_village = Location()
-        Location().add(ShopItem(2)).connect(mabe_village, COUNT("RUPEES", 10))
         Location().add(ShopItem(0)).connect(mabe_village, COUNT("RUPEES", 200))
         Location().add(ShopItem(1)).connect(mabe_village, COUNT("RUPEES", 980))
         dream_hut = Location().add(Chest(0x2BF)).connect(mabe_village, AND(POWER_BRACELET, OR(SWORD, BOOMERANG, HOOKSHOT, FEATHER)))
@@ -52,7 +51,7 @@ class World:
             graveyard.add(OwlStatue(0x035))
         graveyard_heartpiece = Location().add(HeartPiece(0x2DF)).connect(graveyard, AND(BOMB, OR(HOOKSHOT, PEGASUS_BOOTS), FEATHER))  # grave cave
         Location().add(Seashell(0x074)).connect(graveyard, AND(POWER_BRACELET, SHOVEL))  # next to grave cave, digging spot
-        Location().add(Chest(0x2E2)).connect(graveyard, SWORD)  # moblin cave, boss requires sword, contains Bowwow
+        Location().add(Chest(0x2E2)).connect(graveyard, AND(attack_hookshot_powder, miniboss_requirements[world_setup.miniboss_mapping["moblin_cave"]]))
 
         # "Ukuku Prairie"
         # The center_area is the whole area right of the start town, up to the river, and the castle.
@@ -76,11 +75,13 @@ class World:
             prairie_plateau.add(OwlStatue(0x0A8))
         Location().add(Seashell(0x0A8)).connect(prairie_plateau, SHOVEL)  # at the owl statue
         mad_batter_lake = Location().add(MadBatter(0x1E0)).connect(center_area, AND(FEATHER, OR(SWORD, MAGIC_ROD, BOOMERANG), FLIPPERS, MAGIC_POWDER))  # you can use powder instead of sword/magic-rod to clear the bushes, but it is a bit of an advanced action
+        if options.goal != "seashells":
+            Location().add(SeashellMansion(0x2E9)).connect(center_area, COUNT(SEASHELL, 20))
+        else:
+            Location().add(DroppedKey(0x2E9)).connect(center_area, None)
 
-        Location().add(SeashellMansion(0x2E9)).connect(center_area, COUNT(SEASHELL, 20))
-        
         dungeon5_entrance = Location().connect(center_area, FLIPPERS)
-        
+
         # Richard
         richard_cave = Location().connect(center_area, COUNT(GOLD_LEAF, 5))
         if options.owlstatues == "both" or options.owlstatues == "overworld":
@@ -157,15 +158,9 @@ class World:
         left_side_mountain.connect(dungeon8_phone, AND(BOMB, COUNT(SHIELD, 2)), one_way=True)
         dungeon8_phone.connect(writes_hut, None, one_way=True) # Jump down the ledge
         dungeon8_entrance = Location().connect(dungeon8_phone, AND(OCARINA, SONG3, SWORD))
-        
-        if options.goal is None or options.goal == "raft" or int(options.goal) == 8:
-            windfish = Location().connect(below_mountains, AND(OCARINA, SONG1, INSTRUMENT1, INSTRUMENT2, INSTRUMENT3, INSTRUMENT4, INSTRUMENT5, INSTRUMENT6, INSTRUMENT7, INSTRUMENT8, MAGIC_POWDER, SWORD, OR(BOOMERANG, BOW)))
-        elif int(options.goal) < 0:
-            windfish = Location().connect(below_mountains, AND(MAGIC_POWDER, SWORD, OR(BOOMERANG, BOW)))
-        elif int(options.goal) == 0:
-            windfish = Location().connect(below_mountains, AND(OCARINA, SONG1, MAGIC_POWDER, SWORD, OR(BOOMERANG, BOW)))
-        else:
-            windfish = Location().connect(below_mountains, AND(OCARINA, SONG1, COUNT([INSTRUMENT1, INSTRUMENT2, INSTRUMENT3, INSTRUMENT4, INSTRUMENT5, INSTRUMENT6, INSTRUMENT7, INSTRUMENT8], int(options.goal)), MAGIC_POWDER, SWORD, OR(BOOMERANG, BOW)))
+
+        nightmare = Location()
+        windfish = Location().connect(nightmare, AND(MAGIC_POWDER, SWORD, OR(BOOMERANG, BOW)))
 
         if options.logic == 'hard' or options.logic == 'glitched' or options.logic == 'hell':
             dream_hut.connect(mabe_village, HOOKSHOT) # clip past the rocks in front of dream hut
@@ -253,13 +248,14 @@ class World:
         self.dungeon7_entrance = Location().connect(right_mountains_3, BIRD_KEY)
         self.dungeon8_entrance = Location().connect(dungeon8_entrance, SONG3)
         self.dungeon9_entrance = Location().connect(graveyard, POWER_BRACELET)
+        self.egg = below_mountains
+        self.nightmare = nightmare
         self.windfish = windfish
 
 
 class DungeonDiveOverworld:
     def __init__(self, options):
         start_house = Location().add(StartItem())
-        Location().add(ShopItem(2)).connect(start_house, COUNT("RUPEES", 10))
         Location().add(ShopItem(0)).connect(start_house, COUNT("RUPEES", 200))
         Location().add(ShopItem(1)).connect(start_house, COUNT("RUPEES", 980))
         Location().add(Song(0x0B1)).connect(start_house, OCARINA)  # Marins song
@@ -272,14 +268,8 @@ class DungeonDiveOverworld:
         elif options.boomerang == 'gift':
             Location().add(BoomerangGuy()).connect(start_house, BOMB)
 
-        if options.goal is None or options.goal == "raft" or int(options.goal) == 8:
-            windfish = Location().connect(egg, AND(OCARINA, SONG1, INSTRUMENT1, INSTRUMENT2, INSTRUMENT3, INSTRUMENT4, INSTRUMENT5, INSTRUMENT6, INSTRUMENT7, INSTRUMENT8, MAGIC_POWDER, SWORD, OR(BOOMERANG, BOW)))
-        elif int(options.goal) < 0:
-            windfish = Location().connect(egg, AND(MAGIC_POWDER, SWORD, OR(BOOMERANG, BOW)))
-        elif int(options.goal) == 0:
-            windfish = Location().connect(egg, AND(OCARINA, SONG1, MAGIC_POWDER, SWORD, OR(BOOMERANG, BOW)))
-        else:
-            windfish = Location().connect(egg, AND(OCARINA, SONG1, COUNT([INSTRUMENT1, INSTRUMENT2, INSTRUMENT3, INSTRUMENT4, INSTRUMENT5, INSTRUMENT6, INSTRUMENT7, INSTRUMENT8], int(options.goal)), MAGIC_POWDER, SWORD, OR(BOOMERANG, BOW)))
+        nightmare = Location()
+        windfish = Location().connect(nightmare, AND(MAGIC_POWDER, SWORD, OR(BOOMERANG, BOW)))
 
         self.start = start_house
         # List of all the possible locations where we can place our starting house
@@ -302,4 +292,6 @@ class DungeonDiveOverworld:
         self.dungeon7_entrance = start_house
         self.dungeon8_entrance = start_house
         self.dungeon9_entrance = start_house
+        self.egg = egg
+        self.nightmare = nightmare
         self.windfish = windfish
