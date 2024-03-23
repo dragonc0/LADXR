@@ -1,15 +1,16 @@
 import binascii
 from romTables import ROMWithTables
-import shlex
+import json
 import randomizer
 import logic
-import patches.dungeonEntrances
-import explorer
 import spoilerLog
+import argparse
+from settings import Settings
+from typing import Optional, List
 
 
-def main(mainargs=None):
-    import argparse
+
+def main(mainargs: Optional[List[str]] = None) -> None:
     import sys
 
     parser = argparse.ArgumentParser(description='Randomize!')
@@ -17,16 +18,14 @@ def main(mainargs=None):
         help="Rom file to use as input.")
     parser.add_argument('-o', '--output', dest="output_filename", metavar='output rom', type=str, required=False,
         help="Output filename to use. If not specified [seed].gbc is used.")
-    parser.add_argument('--dump', dest="dump", action="store_true",
+    parser.add_argument('--dump', dest="dump", type=str, nargs="*",
         help="Dump the logic of the given rom (spoilers!)")
     parser.add_argument('--spoilerformat', dest="spoilerformat", choices=["none", "console", "text", "json"], default="none",
-        help="Sets the output format for the generated seed's spoiler log")
+       help="Sets the output format for the generated seed's spoiler log")
     parser.add_argument('--spoilerfilename', dest="spoiler_filename", type=str, required=False,
         help="Output filename to use for the spoiler log.  If not specified, LADXR_[seed].txt/json is used.")
     parser.add_argument('--test', dest="test", action="store_true",
         help="Test the logic of the given rom, without showing anything.")
-    parser.add_argument('-s', '--seed', dest="seed", type=str, required=False,
-        help="Generate the specified seed")
     parser.add_argument('--romdebugmode', dest="romdebugmode", action="store_true",
         help="Patch the rom so that debug mode is enabled, this creates a default save with most items and unlocks some debug features.")
     parser.add_argument('--exportmap', dest="exportmap", action="store_true",
@@ -35,86 +34,50 @@ def main(mainargs=None):
         help="Write an unfilled plan file")
     parser.add_argument('--timeout', type=float, required=False,
         help="Timeout generating the seed after the specified number of seconds")
+    parser.add_argument('--logdirectory', dest="log_directory", type=str, required=False,
+        help="Directory to write the JSON log file. Generated independently from the spoiler log and omitted by default.")
 
-    # Flags that effect gameplay
+    parser.add_argument('-s', '--setting', dest="settings", action="append", required=False,
+        help="Set a configuration setting for rom generation")
+    parser.add_argument('--short', dest="shortsettings", type=str, required=False,
+        help="Set a configuration setting for rom generation")
+    parser.add_argument('--settingjson', dest="settingjson", action="store_true",
+        help="Dump a json blob which describes all settings")
+
     parser.add_argument('--plan', dest="plan", metavar='plandomizer', type=str, required=False,
         help="Read an item placement plan")
-    parser.add_argument('--race', dest="race", nargs="?", default=False, const=True,
-        help="Enable race mode. This generates a rom from which the spoiler log cannot be dumped and the seed cannot be extracted.")
-    parser.add_argument('--logic', dest="logic", choices=["normal", "hard", "glitched", "hell"],
-        help="Which level of logic is required.")
-    parser.add_argument('--multiworld', dest="multiworld", type=int, required=False,
-        help="Generates multiple roms for a multiworld setup.")
-    parser.add_argument('--multiworld-config', dest="multiworld_config", action="append", required=False,
-        help="Set configuration for a multiworld player, supply multiple times for settings per player")
-    parser.add_argument('--forwardfactor', dest="forwardfactor", type=float, required=False,
-        help="Forward item weight adjustment factor, lower values generate more rear heavy seeds while higher values generate front heavy seeds. Default is 0.5.")
-    parser.add_argument('--heartpiece', dest="heartpiece", action="store_true",
-        help="Enables randomization of heart pieces.")
-    parser.add_argument('--seashells', dest="seashells", action="store_true",
-        help="Enables seashells mode, which randomizes the secret sea shells hiding in the ground/trees. (chest are always randomized)")
-    parser.add_argument('--heartcontainers', dest="heartcontainers", action="store_true",
-        help="Enables heartcontainer mode, which randomizes the heart containers dropped by bosses.")
-    parser.add_argument('--instruments', dest="instruments", action="store_true",
-        help="Shuffle the instruments in the item pool.")
-    parser.add_argument('--owlstatues', dest="owlstatues", choices=['none', 'dungeon', 'overworld', 'both'], default='none',
-        help="Give the owl statues in dungeons or on the overworld items as well, instead of showing the normal hints")
-    parser.add_argument('--keysanity', dest="keysanity", action="store_true",
-        help="Enables keysanity mode, which shuffles all dungeon items outside dungeons as well.")
-    parser.add_argument('--randomstartlocation', dest="randomstartlocation", action="store_true",
-        help="Place your starting house at a random location.")
-    parser.add_argument('--dungeonshuffle', dest="dungeonshuffle", action="store_true",
-        help="Enable dungeon shuffle, puts dungeons on different spots.")
-    parser.add_argument('--boss', dest="boss", choices=["default", "shuffle", "random"], default="default",
-        help="Enable boss shuffle, swaps around dungeon bosses.")
-    parser.add_argument('--miniboss', dest="miniboss", choices=["default", "shuffle", "random"], default="default",
-        help="Shuffle the minibosses or just randomize them.")
-    parser.add_argument('--witch', dest="witch", action="store_true",
-        help="Enables witch and toadstool in the item pool.")
-    parser.add_argument('--hpmode', dest="hpmode", choices=['default', 'inverted', '1'], default='default',
-        help="Set the HP gamplay mode. Inverted causes health containers to take HP instead of give it and you start with more health. 1 sets your starting health to just 1 hearth.")
-    parser.add_argument('--boomerang', dest="boomerang", choices=['default', 'trade', 'gift'], default='default',
-        help="Put the boomerang and the trade with the boomerang in the item pool")
-    parser.add_argument('--steal', dest="steal", choices=['never', 'always', 'default'], default='always',
-        help="Configure when to allow stealing from the shop.")
-    parser.add_argument('--hard-mode', dest="hardMode", action="store_true",
-        help="Make the game a bit harder, less health from drops, bombs damage yourself, and less iframes.")
-    parser.add_argument('--goal', dest="goal", choices=['-1', '0', '1', '2', '3', '4', '5', '6', '7', '8', 'random', 'raft', 'seashells'], default='8',
-        help="Configure the instrument goal for this rom, anything between 0 and 8.")
-    parser.add_argument('--accessibility', dest="accessibility_rule", choices=['all', 'goal'],
-        help="Switches between making sure all locations are reachable or only the goal is reachable")
-    parser.add_argument('--bowwow', dest="bowwow", choices=['normal', 'always', 'swordless'], default='normal',
-        help="Enables 'good boy mode', where BowWow is allowed on all screens and can damage bosses and more enemies.")
-    parser.add_argument('--pool', dest="itempool", choices=['normal', 'casual', 'pain', 'keyup'], default='normal',
-        help="Sets up different item pools, for easier or harder gameplay.")
-    parser.add_argument('--overworld', dest="overworld", choices=['normal', 'dungeondive'], default='normal')
+    parser.add_argument('--multiworld', dest="multiworld", action="append", required=False,
+        help="Set configuration for a multiworld player, supply multiple times for settings per player, requires a short setting string per player.")
+    parser.add_argument('--doubletrouble', dest="doubletrouble", action="store_true",
+        help="Warning, bugged in various ways")
+    parser.add_argument('--pymod', dest="pymod", action='append',
+        help="Load python code mods.")
 
-    # Just aestetic flags
-    parser.add_argument('--gfxmod', dest="gfxmod", action='append',
-        help="Load graphical mods.")
-    parser.add_argument('--quickswap', dest="quickswap", choices=['none', 'a', 'b'], default='none',
-        help="Configure quickswap for A or B button (select key swaps, no longer opens map)")
-    parser.add_argument('--textmode', dest="textmode", choices=['default', 'fast', 'none'], default='default',
-        help="Default just keeps text normal, fast makes text appear twice as fast, and none removes all text from the game.")
-    parser.add_argument('--nag-messages', dest="removeNagMessages", action="store_false",
-        help="Enable the nag messages on touching stones and crystals. By default they are removed.")
-    parser.add_argument('--lowhpbeep', dest="lowhpbeep", choices=['default', 'slow', 'none'], default='slow',
-        help="Slows or disables the low health beeping sound")
-    parser.add_argument('--linkspalette', dest="linkspalette", type=int, default=None,
-        help="Force the palette of link")
-
+    settings = Settings()
     args = parser.parse_args(mainargs)
+    if args.settingjson:
+        print("var options =")
+        print(json.dumps(settings.toJson(), indent=1))
+        return
+    if args.shortsettings is not None:
+        settings.loadShortString(args.shortsettings)
+    if args.settings:
+        for s in args.settings:
+            settings.set(s)
     if args.multiworld is not None:
-        args.multiworld_options = [args] * args.multiworld
-        if args.multiworld_config is not None:
-            for index, settings_string in enumerate(args.multiworld_config):
-                args.multiworld_options[index] = parser.parse_args([args.input_filename] + shlex.split(settings_string))
+        for s in args.multiworld:
+            player_settings = Settings(len(args.multiworld))
+            player_settings.loadShortString(s)
+            settings.multiworld_settings.append(player_settings)
+
+    settings.validate()
+    print(f"Short settings string: {settings.getShortString()}")
 
     if args.timeout is not None:
         import threading
         import time
         import os
-        def timeoutFunction():
+        def timeoutFunction() -> None:
             time.sleep(args.timeout)
             print("TIMEOUT")
             sys.stdout.flush()
@@ -123,65 +86,69 @@ def main(mainargs=None):
 
     if args.exportmap:
         import mapexport
-        print("Loading: %s" % (args.input_filename))
-        rom = ROMWithTables(args.input_filename)
-        mapexport.MapExport(rom)
+        print(f"Loading: {args.input_filename}")
+        rom = ROMWithTables(open(args.input_filename, 'rb'))
+        mapexport.MapExport(rom).export_all()
         sys.exit(0)
 
     if args.emptyplan:
         import locations.items
-        import logic
         f = open(args.emptyplan, "wt")
         f.write(";Plandomizer data\n;Items: %s\n" % (", ".join(map(lambda n: getattr(locations.items, n), filter(lambda n: not n.startswith("__"), dir(locations.items))))))
         f.write(";Modify the item pool:\n")
         f.write(";Pool:SWORD:+5\n")
         f.write(";Pool:RUPEES_50:-5\n")
-        iteminfo_list = logic.Logic(args, start_house_index=0, entranceMapping=list(range(9)), bossMapping=list(range(9))).iteminfo_list
+        import worldSetup
+        ws = worldSetup.WorldSetup()
+        ws.goal = settings.goal
+        iteminfo_list = logic.Logic(settings, world_setup=ws).iteminfo_list
         for ii in sorted(iteminfo_list, key=lambda n: (n.location.dungeon if n.location.dungeon else -1, repr(n.metadata))):
             if len(ii.OPTIONS) > 1:
                 f.write(";%r\n" % (ii.metadata))
                 f.write("Location:%s: \n" % (ii.nameId))
         sys.exit(0)
 
-    if args.dump or args.test:
+    if args.dump is not None or args.test:
         print("Loading: %s" % (args.input_filename))
-        rom = ROMWithTables(args.input_filename)
+        roms = [ROMWithTables(open(f, 'rb')) for f in [args.input_filename] + args.dump]
 
         if args.spoilerformat == "none":
             args.spoilerformat = "console"
 
         try:
-            log = spoilerLog.SpoilerLog(args, rom)
+            log = spoilerLog.SpoilerLog(settings, args, roms)
             log.output(args.spoiler_filename)
             sys.exit(0)
         except spoilerLog.RaceRomException:
             print("Cannot read spoiler log for race rom")
             sys.exit(1)
 
-    if args.seed:
+    userSeed = None
+    if settings.seed:
         try:
-            args.seed = binascii.unhexlify(args.seed)
+            userSeed = binascii.unhexlify(settings.seed)
         except binascii.Error:
-            args.seed = args.seed.encode("ascii")
+            userSeed = settings.seed.encode("ascii")
 
     retry_count = 0
     while True:
         try:
-            r = randomizer.Randomizer(args, seed=args.seed)
+            r = randomizer.Randomizer(args, settings, seed=userSeed)
             seed = binascii.hexlify(r.seed).decode("ascii").upper()
             break
-        except randomizer.Error:
-            if args.seed is not None:
+        except randomizer.Error as e:
+            if userSeed is not None:
                 print("Specified seed does not produce a valid result.")
                 sys.exit(1)
             retry_count += 1
             if retry_count > 100:
                 print("Randomization keeps failing, abort!")
                 sys.exit(1)
-            print("Failed, trying again: %d" % (retry_count))
+            print("Failed (%s), trying again: %d" % (e, retry_count))
 
     print("Seed: %s" % (seed))
 
 
 if __name__ == "__main__":
     main()
+

@@ -1,5 +1,6 @@
 from rom import ROM
 from pointerTable import PointerTable
+from assembler import ASM
 
 
 class Texts(PointerTable):
@@ -51,6 +52,13 @@ class RoomsOverworldTop(RoomsTable):
             "pointers_addr": 0x000,
             "pointers_bank": 0x09,
             "data_bank": 0x09,
+            "alt_pointers": {
+                "Alt06": (0x00, 0x31FD),
+                "Alt0E": (0x00, 0x31CD),
+                "Alt1B": (0x00, 0x320D),
+                "Alt2B": (0x00, 0x321D),
+                "Alt79": (0x00, 0x31ED),
+            }
         })
 
 
@@ -61,6 +69,9 @@ class RoomsOverworldBottom(RoomsTable):
             "pointers_addr": 0x100,
             "pointers_bank": 0x09,
             "data_bank": 0x1A,
+            "alt_pointers": {
+                "Alt8C": (0x00, 0x31DD),
+            }
         })
 
 
@@ -72,6 +83,9 @@ class RoomsIndoorA(RoomsTable):
             "pointers_addr": 0x000,
             "pointers_bank": 0x0A,
             "data_bank": 0x0A,
+            "alt_pointers": {
+                "Alt1F5": (0x00, 0x31A1),
+            }
         })
 
 
@@ -100,10 +114,6 @@ class RoomsColorDungeon(RoomsTable):
 
 class BackgroundTable(PointerTable):
     def _readData(self, rom, bank_nr, pointer):
-        # Ignore 2 invalid pointers.
-        if pointer in (0, 0x1651):
-            return bytearray()
-
         bank = rom.banks[bank_nr]
         start = pointer
         while bank[pointer] != 0x00:
@@ -170,8 +180,8 @@ class IndoorRoomSpriteData(PointerTable):
 
 
 class ROMWithTables(ROM):
-    def __init__(self, filename):
-        super().__init__(filename)
+    def __init__(self, filestream):
+        super().__init__(filestream)
 
         # Ability to patch any text in the game with different text
         self.texts = Texts(self)
@@ -197,7 +207,10 @@ class ROMWithTables(ROM):
         self.rooms_indoor_a.store(self)
         self.rooms_indoor_b.store(self)
         self.rooms_color_dungeon.store(self)
-        self.room_sprite_data_overworld.store(self)
+        leftover_storage = self.room_sprite_data_overworld.store(self)
+        self.room_sprite_data_indoor.addStorage(leftover_storage)
+        self.patch(0x00, 0x0DFA, ASM("ld hl, $763B"), ASM("ld hl, $%04x" % (leftover_storage[0]["start"] | 0x4000)))
+        self.room_sprite_data_indoor.adjustDataStart(leftover_storage[0]["start"])
         self.room_sprite_data_indoor.store(self)
         self.background_tiles.store(self)
         self.background_attributes.store(self)

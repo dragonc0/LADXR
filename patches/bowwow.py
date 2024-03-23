@@ -2,7 +2,7 @@ from assembler import ASM
 from roomEditor import RoomEditor
 
 
-def fixBowwow(rom, everywhere=False):
+def fixBowwow(rom):
     ### BowWow patches
     rom.patch(0x03, 0x1E0E, ASM("ld [$DB56], a"), "", fill_nop=True)  # Do not mark BowWow as kidnapped after we complete dungeon 1.
     rom.patch(0x15, 0x06B6, ASM("ld a, [$DB56]\ncp $80"), ASM("xor a"), fill_nop=True)  # always load the moblin boss
@@ -41,61 +41,47 @@ def fixBowwow(rom, everywhere=False):
     rom.patch(0x00, 0x2EB0, ASM("ld a, [$DB56]\ncp $01\nld a, $A4\njr z, $18"), "", fill_nop=True)
 
     # Patch the location where bowwow stores chain X/Y positions so it does not conflict with a lot of other things
-    rom.patch(0x05, 0x00BE, ASM("ld hl, $D100"), ASM("ld hl, $D180"))
-    rom.patch(0x05, 0x0275, ASM("ld hl, $D100"), ASM("ld hl, $D180"))
-    rom.patch(0x05, 0x03AD, ASM("ld [$D100], a"), ASM("ld [$D180], a"))
-    rom.patch(0x05, 0x03BD, ASM("ld de, $D100"), ASM("ld de, $D180"))
-    rom.patch(0x05, 0x049F, ASM("ld hl, $D100"), ASM("ld hl, $D180"))
-    rom.patch(0x05, 0x04C2, ASM("ld a, [$D100]"), ASM("ld a, [$D180]"))
-    rom.patch(0x05, 0x03C0, ASM("ld hl, $D101"), ASM("ld hl, $D181"))
-    rom.patch(0x05, 0x0418, ASM("ld [$D106], a"), ASM("ld [$D186], a"))
-    rom.patch(0x05, 0x0423, ASM("ld de, $D106"), ASM("ld de, $D186"))
-    rom.patch(0x05, 0x0426, ASM("ld hl, $D105"), ASM("ld hl, $D185"))
+    rom.patch(0x05, 0x00BE, ASM("ld hl, $D100"), ASM("ld hl, wBowwowChain"))
+    rom.patch(0x05, 0x0275, ASM("ld hl, $D100"), ASM("ld hl, wBowwowChain"))
+    rom.patch(0x05, 0x03AD, ASM("ld [$D100], a"), ASM("ld [wBowwowChain], a"))
+    rom.patch(0x05, 0x03BD, ASM("ld de, $D100"), ASM("ld de, wBowwowChain"))
+    rom.patch(0x05, 0x049F, ASM("ld hl, $D100"), ASM("ld hl, wBowwowChain"))
+    rom.patch(0x05, 0x04C2, ASM("ld a, [$D100]"), ASM("ld a, [wBowwowChain]"))
+    rom.patch(0x05, 0x03C0, ASM("ld hl, $D101"), ASM("ld hl, wBowwowChain + 1"))
+    rom.patch(0x05, 0x0418, ASM("ld [$D106], a"), ASM("ld [wBowwowChain + 6], a"))
+    rom.patch(0x05, 0x0423, ASM("ld de, $D106"), ASM("ld de, wBowwowChain + 6"))
+    rom.patch(0x05, 0x0426, ASM("ld hl, $D105"), ASM("ld hl, wBowwowChain + 5"))
 
-    rom.patch(0x05, 0x00D9, ASM("ld hl, $D110"), ASM("ld hl, $D190"))
-    rom.patch(0x05, 0x026E, ASM("ld hl, $D110"), ASM("ld hl, $D190"))
-    rom.patch(0x05, 0x03BA, ASM("ld [$D110], a"), ASM("ld [$D190], a"))
-    rom.patch(0x05, 0x03DD, ASM("ld de, $D110"), ASM("ld de, $D190"))
-    rom.patch(0x05, 0x0480, ASM("ld hl, $D110"), ASM("ld hl, $D190"))
-    rom.patch(0x05, 0x04B5, ASM("ld a, [$D110]"), ASM("ld a, [$D190]"))
-    rom.patch(0x05, 0x03E0, ASM("ld hl, $D111"), ASM("ld hl, $D191"))
-    rom.patch(0x05, 0x0420, ASM("ld [$D116], a"), ASM("ld [$D196], a"))
-    rom.patch(0x05, 0x044d, ASM("ld de, $D116"), ASM("ld de, $D196"))
-    rom.patch(0x05, 0x0450, ASM("ld hl, $D115"), ASM("ld hl, $D195"))
+    rom.patch(0x19, 0x3A4E, ASM("ld hl, $D100"), ASM("ld hl, wBowwowChain"))
+    rom.patch(0x19, 0x3A5A, ASM("ld hl, $D110"), ASM("ld hl, wBowwowChain + $10"))
+
+    rom.patch(0x05, 0x00D9, ASM("ld hl, $D110"), ASM("ld hl, wBowwowChain + $10"))
+    rom.patch(0x05, 0x026E, ASM("ld hl, $D110"), ASM("ld hl, wBowwowChain + $10"))
+    rom.patch(0x05, 0x03BA, ASM("ld [$D110], a"), ASM("ld [wBowwowChain + $10], a"))
+    rom.patch(0x05, 0x03DD, ASM("ld de, $D110"), ASM("ld de, wBowwowChain + $10"))
+    rom.patch(0x05, 0x0480, ASM("ld hl, $D110"), ASM("ld hl, wBowwowChain + $10"))
+    rom.patch(0x05, 0x04B5, ASM("ld a, [$D110]"), ASM("ld a, [wBowwowChain + $10]"))
+    rom.patch(0x05, 0x03E0, ASM("ld hl, $D111"), ASM("ld hl, wBowwowChain + $11"))
+    rom.patch(0x05, 0x0420, ASM("ld [$D116], a"), ASM("ld [wBowwowChain + $16], a"))
+    rom.patch(0x05, 0x044d, ASM("ld de, $D116"), ASM("ld de, wBowwowChain + $16"))
+    rom.patch(0x05, 0x0450, ASM("ld hl, $D115"), ASM("ld hl, wBowwowChain + $15"))
 
     rom.patch(0x05, 0x0039, ASM("ld [$D154], a"), "", fill_nop=True)  # normally this stores the index to bowwow, for the kiki fight
-    rom.patch(0x05, 0x013C, ASM("ld [$D150], a"), ASM("ld [$D197], a"))
-    rom.patch(0x05, 0x0144, ASM("ld [$D151], a"), ASM("ld [$D198], a"))
-    rom.patch(0x05, 0x02F9, ASM("ld [$D152], a"), ASM("ld [$D199], a"))
-    rom.patch(0x05, 0x0335, ASM("ld a, [$D152]"), ASM("ld a, [$D199]"))
-    rom.patch(0x05, 0x0485, ASM("ld a, [$D151]"), ASM("ld a, [$D198]"))
-    rom.patch(0x05, 0x04A4, ASM("ld a, [$D150]"), ASM("ld a, [$D197]"))
+    rom.patch(0x05, 0x013C, ASM("ld [$D150], a"), ASM("ld [wBowwowChain + $17], a"))
+    rom.patch(0x05, 0x0144, ASM("ld [$D151], a"), ASM("ld [wBowwowChain + $18], a"))
+    rom.patch(0x05, 0x02F9, ASM("ld [$D152], a"), ASM("ld [wBowwowChain + $19], a"))
+    rom.patch(0x05, 0x0335, ASM("ld a, [$D152]"), ASM("ld a, [wBowwowChain + $19]"))
+    rom.patch(0x05, 0x0485, ASM("ld a, [$D151]"), ASM("ld a, [wBowwowChain + $18]"))
+    rom.patch(0x05, 0x04A4, ASM("ld a, [$D150]"), ASM("ld a, [wBowwowChain + $17]"))
 
-    # Patch the bowwow create code to call our custom check of we are in swamp function.
-    if everywhere:
-        # Load followers in dungeons, caves, etc
-        rom.patch(0x01, 0x1FC1, ASM("ret z"), "", fill_nop=True)
-        rom.patch(0x01, 0x1FC4, ASM("ret z"), "", fill_nop=True)
-        rom.patch(0x01, 0x1FC7, ASM("ret z"), "", fill_nop=True)
-        rom.patch(0x01, 0x1FCA, ASM("ret c"), "", fill_nop=True)  # dungeon
-        rom.patch(0x01, 0x1FBC, ASM("ret nz"), "", fill_nop=True)  # sidescroller
-    else:
-        # Patch the bowwow create code to call our custom check of we are in swamp function.
-        rom.patch(0x01, 0x211F, ASM("ldh a, [$F6]\ncp $A7\nret z\nld a, [$DB56]\ncp $01\njr nz, $36"), ASM("""
-            ld a, $07
-            rst 8
-            ld  a, e
-            and a
-            ret z
-        """), fill_nop=True)
-        # Patch bowwow to not stay around when we move from map to map
-        rom.patch(0x05, 0x0049, 0x0054, ASM("""
-            cp   [hl]
-            jr   z, Continue
-            ld   hl, $C280
-            add  hl, bc
-            ld   [hl], b
-            ret
+    # Patch bowwow to not stay around when we move from map to map
+    rom.patch(0x05, 0x0049, 0x0054, ASM("""
+        cp   [hl]
+        jr   z, Continue
+        ld   hl, $C280
+        add  hl, bc
+        ld   [hl], b
+        ret
 Continue:
         """), fill_nop=True)
 
@@ -121,7 +107,7 @@ Continue:
         pop  bc
         ret
     """), fill_nop=True)
-    rom.patch(0x05, 0x0387, ASM("ld a, $03\nldh [$F2], a"), "", fill_nop=True)  # remove the default chomp sfx
+    rom.patch(0x05, 0x0387, ASM("ld a, $03\nldh [$FFF2], a"), "", fill_nop=True)  # remove the default chomp sfx
 
     # Various enemies
     rom.banks[0x14][0x1218 + 0xC5] = 0x01  # Urchin
@@ -194,7 +180,6 @@ Continue:
     rom.banks[0x14][0x1218 + 0xD1] = 0x01  # Animal
     rom.banks[0x14][0x1218 + 0xD2] = 0x01  # Animal
     rom.banks[0x14][0x1218 + 0xD3] = 0x01  # Animal
-    rom.banks[0x14][0x1218 + 0xFA] = 0x01  # Photographer
 
 
 def bowwowMapPatches(rom):

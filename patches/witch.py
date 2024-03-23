@@ -24,7 +24,7 @@ def updateWitch(rom):
         ld  e, $09 ; give powder every time after the first time.
 skip:
         ld  a, e
-        ldh [$F1], a
+        ldh [$FFF1], a
         ld  a, $02
         rst 8
         ld  a, $03
@@ -46,13 +46,13 @@ skip:
     # Patch what happens when we pickup the toadstool, call our chest code to give a toadstool.
     rom.patch(0x03, 0x1D6F, 0x1D7D, ASM("""
         ld   a, $50
-        ldh  [$F1], a
+        ldh  [$FFF1], a
         ld  a, $02 ; give item
         rst 8
 
         ld   hl, $DAA2
         res  5, [hl]
     """), fill_nop=True)
-	
+
 def witchIsPatched(rom):
     return sum(rom.banks[0x05][0x08D4:0x08F0]) != 0x0DC2

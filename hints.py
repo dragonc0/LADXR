@@ -1,11 +1,10 @@
 from locations.items import *
-from locations.constants import INVENTORY_NAME
 from utils import formatText
 
 
 hint_text_ids = [
     # Overworld owl statues
-    0x1B6, 0x1B7, 0x1B8, 0x1B9, 0x1BA, 0x1BB, 0x1BC, 0x1BD, 0x1BE, 0x22D,
+    0x1B6, 0x1B7, 0x1B9, 0x1BA, 0x1BB, 0x1BC, 0x1BD, 0x1BE, 0x22D,
 
     0x288, 0x280,  # D1
     0x28A, 0x289, 0x281,  # D2
@@ -27,16 +26,16 @@ hint_text_ids = [
     0x20B,  # Pre open: 0x20A
 ]
 
-hint_items = (POWER_BRACELET, SHIELD, BOW, HOOKSHOT, MAGIC_ROD, PEGASUS_BOOTS, OCARINA, FEATHER, SHOVEL,
-              MAGIC_POWDER, SWORD, FLIPPERS, TAIL_KEY, ANGLER_KEY, FACE_KEY,
-              BIRD_KEY, SLIME_KEY, GOLD_LEAF, BOOMERANG, BOWWOW)
+hint_items = {POWER_BRACELET, SHIELD, BOW, HOOKSHOT, MAGIC_ROD, PEGASUS_BOOTS, OCARINA, FEATHER, SHOVEL,
+              MAGIC_POWDER, BOMB, SWORD, FLIPPERS, TAIL_KEY, ANGLER_KEY, FACE_KEY,
+              BIRD_KEY, SLIME_KEY, GOLD_LEAF, BOOMERANG, BOWWOW, ROOSTER, SONG1, SONG2, SONG3}
 
 hints = [
     "{0} is at {1}",
     "If you want {0} start looking in {1}",
     "{1} holds {0}",
     "They say that {0} is at {1}",
-    "You might to look in {1} for a secret",
+    "You might want to look in {1} for a secret",
 ]
 useless_hint = [
     ("Egg", "Mt. Tamaranch"),
@@ -58,10 +57,10 @@ def addHints(rom, rnd, spots):
         if len(spots) > 0:
             spot_index = rnd.randint(0, len(spots) - 1)
             spot = spots.pop(spot_index)
-            hint = rnd.choice(hints).format(INVENTORY_NAME[spot.item].decode("ascii"), spot.metadata.area)
+            hint = rnd.choice(hints).format("{%s}" % (spot.item), spot.metadata.area)
         else:
             hint = rnd.choice(hints).format(*rnd.choice(useless_hint))
-        rom.texts[text_id] = formatText(hint.encode("ascii"))
+        rom.texts[text_id] = formatText(hint)
 
     for text_id in range(0x200, 0x20C, 2):
-        rom.texts[text_id] = formatText(b"Read this book?", ask=b"YES  NO")
+        rom.texts[text_id] = formatText("Read this book?", ask="YES  NO")

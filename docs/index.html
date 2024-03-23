@@ -1,136 +1,70 @@
+<!DOCTYPE html>
 <html>
 <head>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mini.css/3.0.1/mini-default.min.css">
+<link rel="stylesheet" href="style.css">
+<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
 
-<h1>LADXR: Legend of Zelda: Link's Awakening DX - Randomizer</h1>
+<div class="container">
+<h1>LADXR: The Legend of Zelda: Link's Awakening DX - Randomizer</h1>
+<div>&nbsp;</div>
+<div style="text-align: center"><img src="logo.png" style="width:50%"></div>
+<div>&nbsp;</div>
+<div class="row">
+    <div class="col-sm-12 col-md-6" style="text-align: center"><a href="https://ladxr.daid.eu/latest/" style="width: 80%" class="button primary">Start Playing</a></div>
+    <div class="col-sm-12 col-md-6" style="text-align: center"><a href="https://discord.gg/XTw7X2G" style="width: 80%" class="button primary">Join Discord</a></div>
+</div>
 
 <h2>What is this?</h2>
-<p>This is a randomizer for the Gamebox Color game The Legend of Zelda: Link's Awakening DX</p>
-<p>What does this do? It changes the locations of items in the game to give a new way to play the game.</p>
-<p>It ensures the game is still beatable, by checking if all locations can still be reached. But no guarantee that you progress from Dungeon to Dungeon, you will have to find your own path.</p>
-<p>The goal of this randomizer is to create a new experience, which does not show any glitches or bugs (except when you use a bug/glitch yourself). Normal gameplay should not introduce any bugs, and it can be experienced like the normal game.</p>
-<p>Feature list:
+<p>LADXR is an item (and entrance) randomizer for the North American/English (revision-0/v1.0) ROM of "The Legend of Zelda: Link's Awakening DX".</p>
+<p><em>What does this do?</em> It changes the locations of items in order to provide a new experience to the game.</p>
+<p>It ensures the game is still beatable by checking if all locations can still be reached, but progress will (usually) not be linear: you will have to find your own path.</p>
+<p>The goal of this randomizer is to create a new experience, both glitchless and bugless (except those caused by the player). Normal gameplay should not introduce any bugs, and it can be experienced like the normal game.</p>
+
+<h2>Feature list:</h2>
 <ul>
-<li>Chest contents all chests is shuffled</li>
-<li>Your starting shield is randomized to be a different item (or the shield)</li>
-<li>Dungeon related items are kept in dungeons by default, keysanity option puts these items everywhere.</li>
-<li>Seashells, golden leaves, dungeon keys, and heart pieces are shuffled with items from the chests</li>
-<li>Trading sequence nor taking Marin on a date is needed to beat the game.</li>
-</ul>
-<p>Important notes/tips/hints/changes:
-<ul>
-<li>Bowwow is put in a chest and can be anywhere. Once you find him, he will only follow you in the swamp. The cave with the Moblins contains a chest with any item, and do not require Dungeon 1 to be completed to be available.</li>
-<li>The ghost that follows you after Dungeon 4 is removed. Nobody likes that guy. The seashell in his house is always available.</li>
-<li>Golden leaves are decoupled from the slime key, the glitch where the slime key works as a way to open richard no longer works. As the golden leaves can be anywhere, and the slimekey can be anywhere.</li>
-<li>Marin is not needed to enter the desert, the walrus is already gone.</li>
-<li>Rooster is currently not available, a Elephant statue is at the bird key location to allow access to that spot.</li>
-<li>Stealing from the shop is not required, there will always be enough rupees from chests before the item from the shop is needed.</li>
-<li>The rafting game can be accessed with just the hookshot, and not flippers, there are 2 chests in there.</li>
-<li>There is a "return to house" in the save and quit menu. To faster get around, and prevent soft locking yourself in rare situations (normal gameplay should not require it, but using glitches makes it easy to softlock yourself)</li>
-<li>The color dungeon is randomized as well, and the two tunics are in the item randomization pool. If you have found multiple tunics, you can switch between them at any phonebooth.</li>
-<li>You might be required to use alternative kill methods on enemies, like powder on bats, or even luring Stalfos that run away from you into pits in Dungeon 1 map chest room.</li>
+<li>Nearly every item is able to be shuffled, depending on your selected settings.</li>
+<li>Dungeon items are shuffled within their respective dungeon by default, but can be included with the rest of the pool (via keysanity, and the such).</li>
+<li>Dungeon keys (Tail Key, Angler Key, Face Key, Bird Key and Slime Key) and the Golden Leaves are also shuffled into the pool of items.</li>
+<li>The trading sequence and the date with Marin are now optional. Each part of the trading sequence will give you an item if you show them what they need.</li>
 </ul>
 
-</p>
+<div class="row">
+    <div class="col-sm-12 col-md-6" style="text-align: center"><a href="faq.html" style="width: 80%" class="button">FAQ</a></div>
+    <div class="col-sm-12 col-md-6" style="text-align: center"><a href="tips.html" style="width: 80%" class="button">Tips!</a></div>
+</div>
 
-<h2>Play</h2>
+<h2>Play older versions</h2>
 
 <p>You can use the following webpages to generate a custom randomized ROM for you.</p>
-<p><a href="http://ladxr.daid.eu/latest/"><strong>Latest: </strong>Latest greatest version, can change at any moment and might be unstable, but most of the time works great.</a></p>
-<p><a href="http://ladxr.daid.eu/v08/"><strong>V0.8: </strong>Current stable version, combining boss shuffle with heart container randomization is buggy.</a></p>
-<p><a href="http://ladxr.daid.eu/v07/"><strong>V0.7: </strong>Current stable version, few small logic bugs.</a></p>
+<p><a href="http://ladxr.daid.eu/latest/"><strong>Latest: </strong>The latest and greatest version, fresh off of the master branch. Can change at any moment, and may be unstable, but most of the time it works great.</a></p>
+<p><a href="http://ladxr.daid.eu/v12/"><strong>V0.12: </strong>Latest stable. New entrance randomizer options. Fixed that shops never had items in logic. Dungeon chain introduced.</a></p>
+<p><a href="http://ladxr.daid.eu/v11/"><strong>V0.11: </strong>Countless logic fixes, a new entrance rando mode, and proper webside plando support.</a></p>
+<p><a href="http://ladxr.daid.eu/v10/"><strong>V0.10: </strong>Many bugfixes from v0.9, and a few more options. Recommended to use v0.11 instead, for the logic.</a></p>
+<p><a href="http://ladxr.daid.eu/v09/"><strong>V0.9: </strong>Long time in the work compared to V0.8, many new options, newer web interface. Entrance randomization contains bugs, and should be avoided.</a></p>
+<p><a href="http://ladxr.daid.eu/v08/"><strong>V0.8: </strong>Combining boss shuffle with heart container randomization is buggy. Various small logic bugs, less options than v0.9.</a></p>
+<p><a href="http://ladxr.daid.eu/v07/"><strong>V0.7: </strong>A few small logic bugs, far less options.</a></p>
 <p><a href="http://ladxr.daid.eu/v06/"><strong>V0.6: </strong>Whole bunch of small bugs, softlocking due to bad key logic is possible, many newer features not available.</a></p>
 <p><a href="http://ladxr.daid.eu/v05/"><strong>V0.5: </strong>Contains a few logic bugs, newer versions are recommended.</a></p>
-<p>(Older versions are too unstable to be useful, as seed generation was not stable)</p>
+<p>(Older versions are too unstable to be useful and are not recommended, as seed generation was not stable)</p>
 
 <h2>Community</h2>
 
-<p>Drop by on <a href="https://discord.gg/XTw7X2G">discord</a> for a chat!</p>
-<p>Report issues/bugs on <a href="https://discord.gg/XTw7X2G">discord</a>, or at <a href="https://github.com/daid/LADXR/issues">github issue tracker</a></p>
-<p>Visit <a href="https://sites.google.com/view/z4randomizer">here</a> for another Links Awakening Randomizer, which has a different focus and gives different playstyle options. Both are cool! We use the same discord server.</p>
-
+<p>Drop by on <a href="https://discord.gg/XTw7X2G">discord</a> for a chat, or to join in on races!</p>
+<p>Report issues/bugs on <a href="https://discord.gg/XTw7X2G">discord</a>, or at the <a href="https://github.com/daid/LADXR/issues">github issue tracker</a></p>
+<p>Visit <a href="https://sites.google.com/view/z4randomizer">here</a> for another Links Awakening Randomizer called Z4R, which has a different focus and gives different playstyle options. Both are cool! We use the same discord server.</p>
+<p>New to the game?  We recommend using a tracker!</p>
+<ul>
+    <li><a href="https://magpietracker.us/">Magpie</a></li> - Made by kbranch and MuffinJets
+    <li><a href="https://windfish.io">Windfish.io</a></li> - Made by Staghouse, primarily for Entrance Randomizer
+</ul>
 <h2>Development</h2>
 
-<p>Source code is available at: <a href="https://github.com/daid/LADXR/">Source code</a>. If you want to contribute, that can be done in many ways, including updating documentation, logic. Or even just bug reports!</p>
+<p>Source code is available at <a href="https://github.com/daid/LADXR/">Github</a>. If you want to contribute, that can be done in many ways, including updating documentation, logic, or even just bug reports!</p>
 
-
-<h2>Seed Generation Options</h2>
-<ul>
-    <li><strong>Add items on owl statues</strong> - Replaces the hints from owl statues with additional randomized items.  Extra 20-rupees are added to the pool.</li>
-    <ul>
-        <li><strong>Never</strong> - All owl statues contain hints.</li>
-        <li><strong>In dungeons</strong> - Owl statues in dungeons give an item if you have the stone beak.</li>
-        <li><strong>On the overworld</strong> - Owl statues on the overworld give an item just by talking to them.</li>
-        <li><strong>Both</strong> - Owl statues both in dungeons and on the overworld give items.</li>
-    </ul>
-    <li><strong>Boomerang trade</strong> - Affects how the boomerang guy in the beach cave is handled.</li>
-    <ul>
-        <li><strong>Default</strong> - Boomerang guy requires the magnifying glass and will always trade you the boomerang.</li>
-        <li><strong>Trade</strong> - The boomerang is shuffled into the main item pool, boomerang guy is visible without the magnifying glass, and can trade you either the boomerang, the hookshot, the magic rod, the boots, the feather, or the shovel.</li>
-        <li><strong>Gift</strong> - The boomerang is shuffled into the main item pool, boomerang guy is visible without the magnifying glass, and simply gives you his item.  Also enables the expanded inventory patch.</li>
-    </ul>
-    <li><strong>Dungeon shuffle</strong> - Randomizes the dungeon that each dungeon entrance leads to.  For example, the entirety of D1 could be locked behind the face key.</li>
-    <li><strong>Good boy mode</strong> - Affects how BowWow is handled.</li>
-    <ul>
-        <li><strong>Disabled</strong> - BowWow's location is randomized, but he only appears in the swamp.</li>
-        <li><strong>Enabled</strong> - You start with BowWow, he can come with you to every screen and can damage bosses and more enemies.</li>
-        <li><strong>Enabled (swordless)</strong> - Same as above, but the sword is removed from the item pool and crystals that usually require the sword are removed.</li>
-    </ul>
-    <li><strong>Graphics</strong> - Applies the selected graphical mod.  Usually includes at least Link's sprite, but may also include any other graphics in the game.</li>
-    <li><strong>Health mode</strong> - Affects how health is handled.</li>
-    <ul>
-        <li><strong>Normal</strong> - Heath behaves exactly as in vanilla.</li>
-        <li><strong>Inverted</strong> - Link starts with 9 hearts and heart containers reduce health.  Works in combination with heart container randomization.  Collecting pieces of heart increases health as normal.</li>
-        <li><strong>Start with 1 heart</strong> - Link starts with 1 heart container, but otherwise health behaves normally.</li>
-    </ul>
-    <li><strong>Instruments needed to open egg</strong> - Sets the number of instruments required to open the egg.  Unless set to "Egg already open", the Ballad of the Wind Fish is still required to open the egg.</li>
-    <li><strong>Keysanity</strong> - All dungeon items (maps, compasses, small keys and nightmare keys) can be found anywhere, even in other dungeons.</li>
-    <li><strong>Link's color</strong> - Forces Link's sprite to use a specific palette.</li>
-    <li><strong>Logic</strong> - Affects the things the player is expected to be able to do to reach items.  
-        See the <a href="https://docs.google.com/spreadsheets/d/1YscJA-N8xudeOB9LtpxLJF4QSToVXdgSKNMkdV2QjcA/edit#gid=0">full requirements</a>, 
-        <a href="https://docs.google.com/document/d/1PiXq9eE6FUjnWcioXxZECHO1AnyHpLZWB9UPfYrTEf8/edit#heading=h.9g504gia4vh8">GIF demonstrations</a>, and 
-        <a href="https://docs.google.com/document/d/1OQ81MLbJRlcIgvcSc0oR__dg6MODRUGcQXb_kbovaoo/edit#heading=h.75hi9vfn554y">detailed trick guide</a> for more information.</li>
-    <ul>
-        <li><strong>Normal</strong> - Items are placed such that they can all be reached with the techniques the vanilla game expects you to use.  Somewhat lesser known things such as destroying bushes with powder may be required.</li>
-        <li><strong>Hard</strong> - More advanced techniques may be required, but glitches are not.  Examples include tricky jumps, killing enemies with only pots and skipping keys with smart routing.</li>
-        <li><strong>Glitched</strong> - Advanced glitches and techniques may be required, but extremely difficult or tedious tricks are not required.  Examples include Bomb Triggers, Super Jumps and Jesus Jumps.</li>
-        <li><strong>Hell</strong> - Obscure and hard techniques may be required. Examples include featherless jumping with boots and/or hookshot, sequential pit buffers and unclipped superjumps.</li>
-    </ul>
-    <li><strong>Low HP beeps</strong> - Affects the low health beeping sound.</li>
-    <ul>
-        <li><strong>Slow</strong> - The time between low health beeps is increased.</li>
-        <li><strong>Normal</strong> - The low health beep is unchanged.</li>
-        <li><strong>Disabled</strong> - The low health beep is completely removed.</li>
-    </ul>
-    <li><strong>Quickswap with SELECT key</strong> - Adds a hidden item slot that the SELECT key swaps with either A or B like a Tetris hold piece.  The map is not available when quickswap is enabled.</li>
-    <li><strong>Race mode</strong> - Prevents spoiler logs from being generated from ROMs generated with race mode enabled.</li>
-    <li><strong>Randomize heart containers</strong> - Includes heart containers dropped from bosses in the randomization process.  Items dropped by bosses will have the correct graphic, and must be collected to access the instrument.</li>
-    <li><strong>Randomize heart pieces</strong> - Includes heart pieces in the randomization process.  Items placed in locations that were originally heart pieces will have the correct graphic, and can be collected the same way a heart piece can (e.g. with the hookshot).  The fishing minigame's heart piece is not randomized.</li>
-    <li><strong>Randomize hidden seashells</strong> - Includes secret seashells found via digging or bonking in the randomization process.  Seashells found in chests are always randomized.  Items placed in locations that were originally seashells will have the correct graphic and behave like a seashell.</li>
-    <li><strong>Randomize item given by the witch</strong> - Includes both the toadstool and the reward for giving the toadstool to the witch in the randomization process.  Also enables the expanded inventory, to allow for both the toadstool and powder to exist at the same time.</li>
-    <li><strong>Seed</strong> - Used to manually set the seed used for random number generation.  Leave this blank to get a randomly selected seed.</li>
-    <li><strong>Show nag messages</strong> - Enables the nag messages normally shown when touching stones and crystals.</li>
-    <li><strong>Stealing from the shop</strong> - Affects how stealing from the shop works.</li>
-    <ul>
-        <li><strong>Always</strong> - The shopkeeper never stops you from stealing, but still kills you if you come back to the shop after stealing.</li>
-        <li><strong>Never</strong> - The shopkeeper always looks at you, preventing you from stealing.</li>
-        <li><strong>Normal</strong> - The shopkeeper behaves normally, allowing you to steal if his back is turned.</li>
-    </ul>
-    <li><strong>Text mode</strong> - Affects how text is displayed.</li>
-    <ul>
-        <li><strong>Fast</strong> - Text boxes scroll twice as fast as vanilla.</li>
-        <li><strong>Normal</strong> - Text boxes scroll at the normal speed.</li>
-        <li><strong>No-text</strong> - All text is removed from the game.</li>
-    </ul>
-    <li><strong>Spoiler format</strong> - Affects how the spoiler log is generated.</li>
-    <ul>
-        <li><strong>Text</strong> - Creates a .txt file meant for a human to read.</li>
-        <li><strong>JSON</strong> - Creates a .json file with a little more information and meant for a computer to read.</li>
-        <li><strong>None</strong> - No spoiler log is generated.  One can still be manually dumped later.</li>
-    </ul>
-</ul>
 </body>
+</html>
 </html>

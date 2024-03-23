@@ -10,6 +10,9 @@ def upgradeMarin(rom):
     rom.patch(0x05, 0x0FB0, ASM("ld a, [$DB48]"), ASM("ld a, $01"), fill_nop=True)
     # Show marin in the animal village
     rom.patch(0x03, 0x0A86, ASM("ld a, [$DB74]"), ASM("ld a, $01"), fill_nop=True)
+    rom.patch(0x05, 0x3F2E, ASM("ld a, [$DB74]"), ASM("ld a, $01"), fill_nop=True)  # animal d0
+    rom.patch(0x15, 0x3F96, ASM("ld a, [$DB74]"), ASM("ld a, $01"), fill_nop=True)  # animal d1
+    rom.patch(0x18, 0x11B0, ASM("ld a, [$DB74]"), ASM("ld a, $01"), fill_nop=True)  # animal d2
 
     # Instead of checking if we have the ballad, check if we have a specific room flag set
     rom.patch(0x05, 0x0F89, ASM("""
@@ -52,7 +55,7 @@ def upgradeMarin(rom):
     rom.patch(0x05, 0x11B3, ASM("""
         ld   de, $515F
         xor  a
-        ldh  [$F1], a
+        ldh  [$FFF1], a
         jp   $3C77
     """), ASM("""
         ld   a, $0C
@@ -65,9 +68,13 @@ def upgradeMarin(rom):
         ld   a, $13
         call $2385
     """), ASM("""
-        ld   a, $0B
+        ld   a, $0E
         rst  8
     """), fill_nop=True)
+
+    # Load marin singing even if you have the marin date
+    rom.patch(0x03, 0x0A91, ASM("jp nz, $3F8D"), "", fill_nop=True)
+    rom.patch(0x05, 0x0E6E, ASM("jp nz, $7B4B"), "", fill_nop=True)
 
 
 def upgradeManbo(rom):
@@ -84,7 +91,7 @@ def upgradeManbo(rom):
     rom.patch(0x18, 0x0786, ASM("""
         ld   de, $474D
         xor  a
-        ldh  [$F1], a
+        ldh  [$FFF1], a
         jp   $3C77
     """), ASM("""
         ld   a, $0C
@@ -103,7 +110,7 @@ def upgradeManbo(rom):
         ld   hl, $DAFD
         set  5, [hl]
         ; Show item message and give item
-        ld   a, $0B
+        ld   a, $0E
         rst  8
     """), fill_nop=True)
     # Remove the normal "got song message")
@@ -126,7 +133,7 @@ def upgradeMamu(rom):
     rom.patch(0x18, 0x0299, ASM("""
         ld   de, $474D
         xor  a
-        ldh  [$F1], a
+        ldh  [$FFF1], a
         call $3C77
     """), ASM("""
         ld   a, $0C
@@ -151,6 +158,6 @@ def upgradeMamu(rom):
         call $4087
     """), ASM("""
         ; Give item and message for room.
-        ld   a, $0B
+        ld   a, $0E
         rst  8
     """), fill_nop=True)

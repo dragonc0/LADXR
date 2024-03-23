@@ -1,5 +1,6 @@
 from assembler import ASM
 from utils import formatText
+from locations.constants import CHEST_ITEMS
 
 
 def fixChests(rom):
@@ -46,7 +47,13 @@ def fixChests(rom):
         ld   a, [hl]
     """), ASM("ld a, $01"), fill_nop=True)
 
-    # Patch gel(zol) entity to load sprites from the 2nd bank
-    rom.patch(0x06, 0x3C09, "5202522254025422" "5200522054005420", "600A602A620A622A" "6008602862086228")
+    # Always spawn seashells even if you have the L2 sword
+    rom.patch(0x14, 0x192F, ASM("ld a, $1C"), ASM("ld a, $20"))
 
-    rom.texts[0x9A] = formatText(b"You found 10 bombs!")
+    rom.texts[0x9A] = formatText("You found 10 {BOMB}!")
+
+
+def setMultiChest(rom, option):
+    room = 0x2F2
+    addr = room + 0x560
+    rom.banks[0x14][addr] = CHEST_ITEMS[option]

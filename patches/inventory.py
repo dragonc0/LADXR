@@ -9,6 +9,62 @@ def selectToSwitchSongs(rom):
     rom.patch(0x20, 0x21A9, ASM("and $01"), ASM("and $40"))
     rom.patch(0x20, 0x21C7, ASM("and $02"), ASM("and $00"))
 
+def songSelectAfterOcarinaSelect(rom):
+    rom.patch(0x20, 0x2002, ASM("ld [$DB00], a"), ASM("call $5F96"))
+    rom.patch(0x20, 0x1FE0, ASM("ld [$DB01], a"), ASM("call $5F9B"))
+    # Remove the code that opens the ocerina on cursor movement, but use it to insert code
+    # for opening the menu on item select
+    rom.patch(0x20, 0x1F93, 0x1FB2, ASM("""
+        jp $5FB2
+    itemToB:
+        ld  [$DB00], a
+        jr checkForOcarina
+    itemToA:
+        ld  [$DB01], a
+    checkForOcarina:
+        cp  $09
+        jp  nz, $6010
+        ld  a, [$DB49]
+        and a
+        ret z
+        ld  a, $08
+        ldh [$FF90], a ; load ocarina song select graphics
+        ;ld  a, $10
+        ;ld  [$C1B8], a ; shows the opening animation
+        ld  a, $01
+        ld  [$C1B5], a
+        ret
+    """), fill_nop=True)
+    # More code that opens the menu, use this to close the menu
+    rom.patch(0x20, 0x200D, 0x2027, ASM("""
+        jp $6027
+    closeOcarinaMenu:
+        ld  a, [$C1B5]
+        and a
+        ret z
+        xor a
+        ld  [$C1B5], a
+        ld  a, $10
+        ld  [$C1B9], a ; shows the closing animation
+        ret
+    """), fill_nop=True)
+    rom.patch(0x20, 0x2027, 0x2036, "", fill_nop=True) # Code that closes the ocarina menu on item select
+
+    rom.patch(0x20, 0x22A2, ASM("""
+        ld  a, [$C159]
+        inc a
+        ld  [$C159], a
+        and $10
+        jr  nz, $30
+    """), ASM("""
+        ld  a, [$C1B5]
+        and a
+        ret nz
+        ldh a, [$FFE7] ; frame counter
+        and $10
+        ret nz 
+    """), fill_nop=True)
+
 def moreSlots(rom):
     #Move flippers, medicine, trade item and seashells to DB3E+
     rom.patch(0x02, 0x292B, ASM("ld a, [$DB0C]"), ASM("ld a, [$DB3E]"))
@@ -87,8 +143,8 @@ def moreSlots(rom):
     rom.patch(0x19, 0x2df2, ASM("ld [$DB0E], a"), ASM("ld [$DB40], a"))
     rom.patch(0x19, 0x2ef1, ASM("ld a, [$DB0E]"), ASM("ld a, [$DB40]"))
     rom.patch(0x19, 0x2f95, ASM("ld a, [$DB0E]"), ASM("ld a, [$DB40]"))
-    rom.patch(0x20, 0x1b04, ASM("ld a, [$DB0E]"), ASM("ld a, [$DB40]"))
-    rom.patch(0x20, 0x1e42, ASM("ld a, [$DB0E]"), ASM("ld a, [$DB40]"))
+    rom.patch(0x20, 0x1b04, ASM("ld a, [$DB0E]"), ASM("ld a, $00"), fill_nop=True) # This sets the palette for the inventory submenu trade item.
+    rom.patch(0x20, 0x1e42, ASM("ld a, [$DB0E]"), ASM("ld a, $00"), fill_nop=True) # This sets the palette for the inventory submenu trade item.
     rom.patch(0x36, 0x0948, ASM("ld a, [$DB0E]"), ASM("ld a, [$DB40]"))
     rom.patch(0x19, 0x31Ca, ASM("ld a, [$DB0F]"), ASM("ld a, [$DB41]"))
     rom.patch(0x19, 0x3215, ASM("ld a, [$DB0F]"), ASM("ld a, [$DB41]"))
@@ -108,16 +164,15 @@ def moreSlots(rom):
         "9D219D25"
         "9D619D65"
         "9DA19DA5"
-        "9DE19DE5")
-    rom.patch(0x20, 0x1CC7, ASM("ld hl, $5C84"), ASM("ld hl, $7E53"))
-    rom.patch(0x20, 0x1BCC, ASM("ld hl, $5C84"), ASM("ld hl, $7E53"))
-    rom.patch(0x20, 0x1CF0, ASM("ld hl, $5C84"), ASM("ld hl, $7E53"))
+        "9DE19DE5")  # New table with tile addresses for all slots
+    rom.patch(0x20, 0x1CC7, ASM("ld hl, $5C84"), ASM("ld hl, $7E53")) # use the new table
+    rom.patch(0x20, 0x1BCC, ASM("ld hl, $5C84"), ASM("ld hl, $7E53")) # use the new table
+    rom.patch(0x20, 0x1CF0, ASM("ld hl, $5C84"), ASM("ld hl, $7E53")) # use the new table
 
-    rom.patch(0x20, 0x1C8C,
-        "9CC19CC59D219D259D819D859DE19DE5",
-        "28283838484858586868787888889898")
-    rom.patch(0x20, 0x22b3, ASM("ld hl, $6298"), ASM("ld hl, $5C8C"))
-    rom.patch(0x20, 0x2298, "28284040", "08280828")
+    # sprite positions for inventory cursor, new table, placed at the end of the bank
+    rom.patch(0x20, 0x3E90, "00" * 16, "28283838484858586868787888889898")
+    rom.patch(0x20, 0x22b3, ASM("ld hl, $6298"), ASM("ld hl, $7E90"))
+    rom.patch(0x20, 0x2298, "28284040", "08280828")  # Extend the sprite X positions for the inventory table
 
     # Piece of power overlay positions
     rom.patch(0x20, 0x233A,
@@ -153,24 +208,59 @@ def moreSlots(rom):
     rom.patch(0x20, 0x235C, ASM("ld d, $0C"), ASM("ld d, $10"))
     rom.patch(0x36, 0x31B8, ASM("ld e, $0C"), ASM("ld e, $10"))
 
+    ##  Patch the toadstool as a different item
+    rom.patch(0x20, 0x1C84, "9C019C" "069C61", "4C7F7F" "4D7F7F")  # Which tiles are used for the toadstool
+    rom.patch(0x20, 0x1C8A, "9C659C" "C19CC5", "90927F" "91937F")  # Which tiles are used for the rooster
+    rom.patch(0x20, 0x1C90, "9D219D" "259D81", "057F7F" "047F7F")  # Which tiles are used for the hammer
+    rom.patch(0x20, 0x1C6C, "927F7F" "937F7F", "127F7F" "137F7F")  # Which tiles are used for the feather (to make space for rooster)
+    rom.patch(0x20, 0x1C66, "907F7F" "917F7F", "107F7F" "117F7F")  # Which tiles are used for the ocarina (to make space for rooster)
 
-    # Patch the toadstool as a different item
-    rom.patch(0x20, 0x1C84, "9C019C" "069C61", "4C7F7F" "4D7F7F")
-    rom.banks[0x20][0x1C32:0x1C8C] = rom.banks[0x20][0x1C30:0x1C8A]
-    rom.patch(0x20, 0x1CDB, ASM("ld hl, $5C30"), ASM("ld hl, $5C32"))
-    rom.patch(0x20, 0x1D0D, ASM("ld hl, $5C33"), ASM("ld hl, $5C35"))
-    rom.patch(0x20, 0x1C30, "7F7F", "0A0B")
+    # Move the inventory tile numbers to a higher address, so there is space for the table above it.
+    rom.banks[0x20][0x1C36:0x1C9C] = rom.banks[0x20][0x1C30:0x1C96]
+    rom.patch(0x20, 0x1CDB, ASM("ld hl, $5C30"), ASM("ld hl, $5C36"))
+    rom.patch(0x20, 0x1D0D, ASM("ld hl, $5C33"), ASM("ld hl, $5C39"))
+    rom.patch(0x20, 0x1C30, "7F7F", "0A0B")  # Toadstool tile attributes
+    rom.patch(0x20, 0x1C32, "7F7F", "0101")  # Rooster tile attributes
+    rom.patch(0x20, 0x1C34, "7F7F", "4B4B")  # Hammer tile attributes
+    rom.patch(0x20, 0x1C28, "0303", "0B0B")  # Feather tile attributes (due to rooster)
+    rom.patch(0x20, 0x1C26, "0202", "0A0A")  # Ocarina tile attributes (due to rooster)
 
-    # Allow usage of the toadstool
-    rom.patch(0x00, 0x12CC, ASM("jp z, $148d"), ASM("jp $3FEF"))
-    rom.patch(0x00, 0x3FEF, "00" * 17, ASM("""
-        jr z, UseMagicPowder
-        cp $0E
-        jp nz, $12CF
-        jp $1498
-UseMagicPowder:
-        jp $14A7
-    """), fill_nop=True)
+    # Allow usage of the toadstool (replace the whole manual jump table with an rst 0 jumptable
+    rom.patch(0x00, 0x129D, 0x12D8, ASM("""
+        rst 0 ; jump table
+        dw $12ED ; no item
+        dw $1528 ; Sword
+        dw $135A ; Bomb
+        dw $1382 ; Bracelet
+        dw $12EE ; Shield
+        dw $13BD ; Bow
+        dw $1319 ; Hookshot
+        dw $12D8 ; Magic rod
+        dw $12ED ; Boots (no action)
+        dw $41FC ; Ocarina
+        dw $14CB ; Feather
+        dw $12F8 ; Shovel
+        dw $148D ; Magic powder
+        dw $1383 ; Boomerang
+        dw $1498 ; Toadstool
+        dw RoosterUse ; Rooster
+        dw HammerUse
+RoosterUse:
+    ld   a, $01
+    ld   [$DB7B], a ; has rooster
+    call $3958 ; spawn followers
+    xor  a
+    ld   [$DB7B], a ; has rooster
+    ret
+HammerUse:
+    ld   a, $B7
+    call $3B86 ; SpawnNewEntity_trampoline
+    ;ret  c
+    ld   hl, $C290 ; wEntitiesStateTable
+    add  hl, de
+    inc  [hl] 
+    ret
+    """, 0x129D), fill_nop=True)
     # Fix the graphics of the toadstool hold over your head
     rom.patch(0x02, 0x121E, ASM("ld e, $8E"), ASM("ld e, $4C"))
     rom.patch(0x02, 0x1241, ASM("ld a, $14"), ASM("ld a, $1C"))
@@ -181,7 +271,7 @@ UseMagicPowder:
     # Patch the toadstool entity code to give the proper item, and not set the has-toadstool flag.
     rom.patch(0x03, 0x1D6F, ASM("""
         ld   a, $0A
-        ldh  [$A5], a
+        ldh  [$FFA5], a
         ld   d, $0C
         call $6472
         ld   a, $01
@@ -192,7 +282,7 @@ UseMagicPowder:
     """), fill_nop=True)
 
     # Patch the debug save game so it does not give a bunch of swords
-    rom.patch(0x01, 0x0673, "01010100", "0D0E0000")
+    rom.patch(0x01, 0x0673, "01010100", "0D0E0F10")
 
     # Patch the witch to use the new toadstool instead of the old flag
     rom.patch(0x05, 0x081A, ASM("ld a, [$DB4B]"), ASM("ld a, $01"), fill_nop=True)
@@ -245,13 +335,13 @@ def advancedInventorySubscreen(rom):
     rom.patch(0x20, 0x3E08+0x32, "00" * 25, "9DAA08464646464646464646" "9DCA08B0B0B0B0B0B0B0B0B0" "00")
 
     # instead of doing an GBC specific check, jump to our custom handling
-    rom.patch(0x20, 0x19DE, ASM("ldh a, [$FE]\nand a\njr z, $40"), ASM("call $7F00"), fill_nop=True)
+    rom.patch(0x20, 0x19DE, ASM("ldh a, [$FFFE]\nand a\njr z, $40"), ASM("call $7F00"), fill_nop=True)
 
     rom.patch(0x20, 0x3F00, "00" * 0x100, ASM("""
         ld   a, [$DBA5] ; isIndoor
         and  a
         jr   z, RenderKeysCounts
-        ldh  a, [$F7]   ; mapNr
+        ldh  a, [$FFF7]   ; mapNr
         cp   $FF
         jr   z, RenderDungeonFix
         cp   $06

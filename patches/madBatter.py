@@ -14,14 +14,14 @@ def upgradeMadBatter(rom):
     rom.patch(0x18, 0x101E, 0x1051, ASM("""
         ; Mad batter rooms are E0,E1 and E2, load the item type from a table in the rom
         ; which only has 3 entries, and store it where bank 3E wants it.
-        ldh a, [$F6] ; current room
+        ldh a, [$FFF6] ; current room
         and $0F
         ld  d, $00
         ld  e, a
         ld  hl, $4F90
         add hl, de
         ld  a, [hl]
-        ldh [$F1], a
+        ldh [$FFF1], a
     
         ; Give item
         ld  a, $06 ; giveItemMultiworld
@@ -37,6 +37,6 @@ def upgradeMadBatter(rom):
     # Setup the default items
     rom.patch(0x18, 0x0F90, "406060", "848586")
 
-    rom.texts[0xE2] = formatText(b"You can now carry more Magic Powder!")
-    rom.texts[0xE3] = formatText(b"You can now carry more Bombs!")
-    rom.texts[0xE4] = formatText(b"You can now carry more Arrows!")
+    rom.texts[0xE2] = formatText("You can now carry more Magic Powder!")
+    rom.texts[0xE3] = formatText("You can now carry more Bombs!")
+    rom.texts[0xE4] = formatText("You can now carry more Arrows!")

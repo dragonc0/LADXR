@@ -3,9 +3,7 @@ import json
 import logic
 import explorer
 import patches.witch
-import patches.startLocation
-import patches.dungeonEntrances
-import patches.enemies
+from settings import Settings
 from worldSetup import WorldSetup
 
 
@@ -18,13 +16,17 @@ class SpoilerItemInfo:
         self.id = ii.nameId
         self.area = ii.metadata.area
         self.locationName = ii.metadata.name
-        self.sphere = ii.metadata.sphere
+        self.sphere = ii.sphere if hasattr(ii, "sphere") else None
         self.itemName = str(ii.read(rom))
         self.player = None
+        self.world = ii.world
 
-        if multiworld:
-            self.player = rom.banks[0x3E][0x3300 + ii.room] + 1
-    
+        if multiworld and ii.room is not None:
+            if ii.MULTIWORLD:
+                self.player = rom.banks[0x3E][0x3300 + ii.room] + 1
+            else:
+                self.player = rom.banks[0x00][0x0055] + 1
+
     def __repr__(self):
         itemName = self.itemName
 
@@ -40,47 +42,64 @@ class SpoilerItemInfo:
 
 
 class SpoilerLog:
-    def __init__(self, args, rom):
-        if rom.banks[0][7] == 0x01:
-            raise RaceRomException()
+    def __init__(self, settings, args, roms):
+        for rom in roms:
+            if rom.banks[0][7] == 0x01:
+                raise RaceRomException()
 
-        self.seed = rom.readHexSeed()
+        self.seed = roms[0].readHexSeed()
         self.testOnly = args.test
         self.accessibleItems = []
         self.inaccessibleItems = None
         self.outputFormat = args.spoilerformat
+        self.settings = settings
 
         # Assume the broadest settings if we're dumping a seed we didn't just create
         if args.dump:
             # The witch flag causes trouble if we blindly turn it on
-            if patches.witch.witchIsPatched(rom):
-                args.witch = True
+            if patches.witch.witchIsPatched(roms[0]):
+                self.settings.witch = True
 
-            args.boomerang = "gift"
-            args.heartpiece = True
-            args.seashells = True
-            args.heartcontainers = True
-            args.owlstatues = "both"
+            self.settings.boomerang = "gift"
+            self.settings.heartpiece = True
+            self.settings.seashells = True
+            self.settings.heartcontainers = True
+            self.settings.owlstatues = "both"
 
-        self.world_setup = WorldSetup()
-        self.world_setup.loadFromRom(rom)
+            if len(roms) > 1:
+                #TODO: This broke with the settings change
+                self.settings.multiworld = len(roms)
+                if not hasattr(args, "multiworld_options"):
+                    self.settings.multiworld_options = [args] * args.multiworld
 
-        self._loadItems(args, rom)
+        world_setups = []
+        for rom in roms:
+            world_setup = WorldSetup()
+            world_setup.loadFromRom(rom)
+            world_setups.append(world_setup)
+
+        if len(world_setups) == 1:
+            self.logic = logic.Logic(self.settings, world_setup=world_setups[0])
+        else:
+            self.logic = logic.MultiworldLogic(self.settings, world_setups=world_setups)
+
+        self._loadItems(self.settings, roms)
     
-    def _loadItems(self, args, rom):
-        my_logic = logic.Logic(args, world_setup=self.world_setup)
-        remainingItems = set(my_logic.iteminfo_list)
+    def _loadItems(self, settings, roms):
+        remainingItems = set(self.logic.iteminfo_list)
 
         currentSphere = 0
         lastAccessibleLocations = set()
         itemContents = {}
-        for ii in my_logic.iteminfo_list:
-            itemContents[ii] = ii.read(rom)
+        for ii in self.logic.iteminfo_list:
+            if not hasattr(ii, "world"):
+                ii.world = 0
+            itemContents[ii] = ii.read(roms[ii.world])
 
         # Feed the logic items one sphere at a time
         while remainingItems:
             e = explorer.Explorer()
-            e.visit(my_logic.start)
+            e.visit(self.logic.start)
 
             newLocations = e.getAccessableLocations() - lastAccessibleLocations
 
@@ -90,7 +109,7 @@ class SpoilerLog:
 
             for location in newLocations:
                 for ii in location.items:
-                    ii.metadata.sphere = currentSphere
+                    ii.sphere = currentSphere
                     ii.item = itemContents[ii]
                     if ii in remainingItems:
                         remainingItems.remove(ii)
@@ -103,14 +122,14 @@ class SpoilerLog:
 
         for location in e.getAccessableLocations():
             for ii in location.items:
-                self.accessibleItems.append(SpoilerItemInfo(ii, rom, args.multiworld))
+                self.accessibleItems.append(SpoilerItemInfo(ii, roms[ii.world], settings.multiworld))
 
-        if len(e.getAccessableLocations()) != len(my_logic.location_list):
+        if len(e.getAccessableLocations()) != len(self.logic.location_list):
             self.inaccessibleItems = []
-            for loc in my_logic.location_list:
+            for loc in self.logic.location_list:
                 if loc not in e.getAccessableLocations():
                     for ii in loc.items:
-                        self.inaccessibleItems.append(SpoilerItemInfo(ii, rom, args.multiworld))
+                        self.inaccessibleItems.append(SpoilerItemInfo(ii, roms[ii.world], settings.multiworld))
 
     def output(self, filename=None, zipFile=None):
         if self.outputFormat == "text":
@@ -136,7 +155,17 @@ class SpoilerLog:
         if not filename:
             filename = "LADXR_%s.json" % self.seed
 
-        jsonContent = json.dumps(self, default=lambda x: x.__dict__)
+        jsonContent = json.dumps({
+            "accessibleItems": [item.__dict__ for item in self.accessibleItems],
+            "inaccessibleItems": [item.__dict__ for item in self.inaccessibleItems or []],
+            "options": {s.key: s.value for s in self.settings},
+            "entrances":
+                {entrance: target for entrance, target in self.logic.world_setup.entrance_mapping.items() if f"{entrance}:inside" != target and entrance != f"{target}:inside"}
+                if isinstance(self.logic, logic.Logic) else [
+                    {entrance: target for entrance, target in world.world_setup.entrance_mapping.items() if f"{entrance}:inside" != target and entrance != f"{target}:inside"} for world in self.logic.worlds
+                ],
+            "seed": self.seed
+        }, indent="  ")
 
         if zipFile:
             zipFile.writestr(filename, jsonContent)
@@ -147,8 +176,17 @@ class SpoilerLog:
         print("Saved: %s" % filename)
 
     def __repr__(self):
+        lines = []
         if not self.testOnly:
-            lines = ["Dungeon order:" + ", ".join(map(lambda n: "D%d:%d" % (n[0] + 1, n[1] + 1), enumerate(self.world_setup.dungeon_entrance_mapping)))]
+            if isinstance(self.logic, logic.Logic):
+                for entrance, target in sorted(self.logic.world_setup.entrance_mapping.items()):
+                    if f"{entrance}:inside" != target and entrance != f"{target}:inside":
+                        lines.append("Entrance: %s -> %s" % (entrance, target))
+            elif isinstance(self.logic, logic.MultiworldLogic):
+                for index, world in enumerate(self.logic.worlds):
+                    for entrance, target in sorted(world.world_setup.entrance_mapping.items()):
+                        if f"{entrance}:inside" != target and entrance != f"{target}:inside":
+                            lines.append("P%d Entrance: %s -> %s" % (index + 1, entrance, target))
             lines += [str(x) for x in sorted(self.accessibleItems, key=lambda x: (x.sphere if x.sphere is not None else sys.maxsize, x.area, x.locationName))]
 
         if self.inaccessibleItems:

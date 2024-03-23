@@ -16,11 +16,12 @@ class BoomerangGuy(ItemInfo):
         if self.setting == 'gift':
             self.OPTIONS = [POWER_BRACELET, SHIELD, BOW, HOOKSHOT, MAGIC_ROD, PEGASUS_BOOTS, OCARINA,
                 FEATHER, SHOVEL, MAGIC_POWDER, BOMB, SWORD, FLIPPERS, MAGNIFYING_LENS, MEDICINE,
-                TAIL_KEY, ANGLER_KEY, FACE_KEY, BIRD_KEY, GOLD_LEAF, SLIME_KEY,
+                TAIL_KEY, ANGLER_KEY, FACE_KEY, BIRD_KEY, GOLD_LEAF, SLIME_KEY, ROOSTER, HAMMER,
                 RUPEES_50, RUPEES_20, RUPEES_100, RUPEES_200, RUPEES_500,
                 SEASHELL, BOOMERANG, HEART_PIECE, BOWWOW, ARROWS_10, SINGLE_ARROW,
                 MAX_POWDER_UPGRADE, MAX_BOMBS_UPGRADE, MAX_ARROWS_UPGRADE, RED_TUNIC, BLUE_TUNIC,
                 HEART_CONTAINER, BAD_HEART_CONTAINER, TOADSTOOL]
+            self.MULTIWORLD = True
 
     # Cannot trade:
     # SWORD, BOMB, SHIELD, POWER_BRACELET, OCARINA, MAGIC_POWDER, BOW
@@ -28,11 +29,10 @@ class BoomerangGuy(ItemInfo):
     # But SHIELD, BOMB and MAGIC_POWDER would most likely break things.
     # SWORD and POWER_BRACELET would most likely introduce the lv0 shield/bracelet issue
     def patch(self, rom, option, *, multiworld=None):
-        assert multiworld is None
-
         # Always have the boomerang trade guy enabled (normally you need the magnifier)
         rom.patch(0x19, 0x05EC, ASM("ld a, [wTradeSequenceItem]\ncp $0E"), ASM("ld a, $0E\ncp $0E"), fill_nop=True)  # show the guy
         rom.patch(0x00, 0x3199, ASM("ld a, [wTradeSequenceItem]\ncp $0E"), ASM("ld a, $0E\ncp $0E"), fill_nop=True)  # load the proper room layout
+        rom.patch(0x19, 0x05F4, ASM("ld a, [wTradeSequenceItem2]\nand a"), ASM("xor a"), fill_nop=True)
 
         if self.setting == 'trade':
             inv = INVENTORY_MAP[option]
@@ -45,21 +45,21 @@ class BoomerangGuy(ItemInfo):
             # Put the boomerang ID in the inventory of the boomerang guy (aka, traded back)
             rom.patch(0x19, 0x0710, ASM("ld a, $0D"), ASM("ld a, $%s" % (inv)))
 
-            rom.texts[0x222] = formatText(b"Okay, let's do it!")
-            rom.texts[0x224] = formatText(b"You got the %s in exchange for the item you had." % (INVENTORY_NAME[option]))
-            rom.texts[0x225] = formatText(b"Give me back my %s, I beg you! I'll return the item you gave me" % (INVENTORY_NAME[option]), ask=b"Okay Not Now")
-            rom.texts[0x226] = formatText(b"The item came back to you. You returned the other item.")
+            rom.texts[0x222] = formatText("Okay, let's do it!")
+            rom.texts[0x224] = formatText("You got the {%s} in exchange for the item you had." % (option))
+            rom.texts[0x225] = formatText("Give me back my {%s}, I beg you! I'll return the item you gave me" % (option), ask="Okay Not Now")
+            rom.texts[0x226] = formatText("The item came back to you. You returned the other item.")
         else:
             # Patch the inventory trade to give an specific item instead
-            rom.texts[0x221] = formatText(b"I found a good item washed up on the beach... Want to have it?", ask=b"Okay No")
+            rom.texts[0x221] = formatText("I found a good item washed up on the beach... Want to have it?", ask="Okay No")
             rom.patch(0x19, 0x069C, 0x06C6, ASM("""
                 ; Mark trade as done
                 ld a, $06
                 ld [$DB7D], a
 
                 ld a, [$472B]
-                ldh [$F1], a
-                ld a, $02
+                ldh [$FFF1], a
+                ld a, $06
                 rst 8
                 
                 ld a, $0D
@@ -67,22 +67,25 @@ class BoomerangGuy(ItemInfo):
             # Show the right item above link
             rom.patch(0x19, 0x0786, 0x0793, ASM("""
                 ld a, [$472B]
-                ldh [$F1], a
+                ldh [$FFF1], a
                 ld a, $01
                 rst 8
             """), fill_nop=True)
             # Give the proper message for this item
             rom.patch(0x19, 0x075A, 0x076A, ASM("""
                 ld a, [$472B]
-                ldh [$F1], a
-                ld a, $03
+                ldh [$FFF1], a
+                ld a, $0A
                 rst 8
             """), fill_nop=True)
             rom.patch(0x19, 0x072B, "00", "%02X" % (CHEST_ITEMS[option]))
 
             # Ignore the trade back.
-            rom.texts[0x225] = formatText(b"It's a secret to everybody.")
+            rom.texts[0x225] = formatText("It's a secret to everybody.")
             rom.patch(0x19, 0x0668, ASM("ld a, [$DB7D]"), ASM("ret"), fill_nop=True)
+
+            if multiworld is not None:
+                rom.banks[0x3E][0x3300 + self.room] = multiworld
 
     def read(self, rom):
         if rom.banks[0x19][0x06C5] == 0x00:

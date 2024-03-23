@@ -17,6 +17,7 @@ class PointerTable:
         self.__info = info
 
         self.__data = []
+        self.__alt_data = {}
         self.__banks = []
         self.__storage = []
 
@@ -26,7 +27,7 @@ class PointerTable:
         if "data_addr" in info:
             pointers_raw = []
             for n in range(count):
-                pointers_raw.append(info["data_addr"] + pointers_bank[addr + n] * info["data_size"])
+                pointers_raw.append(info["data_addr"] + 0x4000 + pointers_bank[addr + n] * info["data_size"])
         else:
             pointers_raw = struct.unpack("<" + "H" * count, pointers_bank[addr:addr+count*2])
         if "data_bank" in info:
@@ -35,11 +36,20 @@ class PointerTable:
             addr = info["banks_addr"]
             banks = rom.banks[info["banks_bank"]][addr:addr+count]
 
+        if "alt_pointers" in self.__info:
+            for key, (bank, addr) in self.__info["alt_pointers"].items():
+                pointer = struct.unpack("<H", rom.banks[bank][addr:addr+2])[0]
+                assert 0x4000 <= pointer < 0x8000
+                self.__alt_data[key] = self._readData(rom, self.__info["data_bank"], pointer & 0x3FFF)
+
         for n in range(count):
             bank = banks[n] & 0x3f
             pointer = pointers_raw[n]
-            pointer &= 0x3fff
-            self.__data.append(self._readData(rom, bank, pointer))
+            if 0x4000 <= pointer < 0x8000:
+                pointer &= 0x3fff
+                self.__data.append(self._readData(rom, bank, pointer))
+            else:
+                self.__data.append(pointer)
             self.__banks.append(bank)
 
         while self.__mergeStorage():
@@ -59,10 +69,20 @@ class PointerTable:
         # for s in sorted(self.__storage, key=lambda s: (s["bank"], s["start"])):
         #     print(self.__class__.__name__, s)
 
+    def __contains__(self, item):
+        if isinstance(item, str):
+            return item in self.__alt_data
+        return 0 <= item < len(self.__data)
+
     def __setitem__(self, item, value):
-        self.__data[item] = value
+        if isinstance(item, str):
+            self.__alt_data[item] = value
+        else:
+            self.__data[item] = value
 
     def __getitem__(self, item):
+        if isinstance(item, str):
+            return self.__alt_data[item]
         return self.__data[item]
 
     def __len__(self):
@@ -77,6 +97,23 @@ class PointerTable:
         done = {}
         for st in storage:
             done[st["bank"]] = {}
+        for key, (ptr_bank, ptr_addr) in self.__info.get("alt_pointers", {}).items():
+            s = bytes(self.__alt_data[key])
+            bank = self.__info["data_bank"]
+            my_storage = None
+            for st in storage:
+                if st["end"] - st["start"] >= len(s) and st["bank"] == bank:
+                    my_storage = st
+                    break
+            assert my_storage is not None, "Not enough room in storage... %s" % (storage)
+
+            pointer = my_storage["start"]
+            my_storage["start"] = pointer + len(s)
+            rom.banks[bank][pointer:pointer + len(s)] = s
+
+            rom.banks[ptr_bank][ptr_addr] = pointer & 0xFF
+            rom.banks[ptr_bank][ptr_addr + 1] = (pointer >> 8) | 0x40
+
         for n, s in enumerate(self.__data):
             if isinstance(s, int):
                 pointer = s
@@ -92,7 +129,7 @@ class PointerTable:
                         if st["end"] - st["start"] >= len(s) and st["bank"] == bank:
                             my_storage = st
                             break
-                    assert my_storage is not None, "Not enough room in storage... %s" % (storage)
+                    assert my_storage is not None, "Not enough room in storage... %d/%d %s id:%x(%d) bank:%d" % (n, len(self.__data), storage, n, n, bank)
 
                     pointer = my_storage["start"]
                     my_storage["start"] = pointer + len(s)
@@ -116,6 +153,7 @@ class PointerTable:
 
         space_left = sum(map(lambda n: n["end"] - n["start"], storage))
         # print(self.__class__.__name__, "Space left:", space_left)
+        return storage
 
     def _readData(self, rom, bank_nr, pointer):
         bank = rom.banks[bank_nr]
@@ -157,3 +195,13 @@ class PointerTable:
                     self.__storage.pop(m)
                     return True
         return False
+
+    def addStorage(self, extra_storage):
+        for data in extra_storage:
+            self._addStorage(data["bank"], data["start"], data["end"])
+        while self.__mergeStorage():
+            pass
+        self.__storage.sort(key=lambda n: n["start"])
+
+    def adjustDataStart(self, new_start):
+        self.__info["data_addr"] = new_start
